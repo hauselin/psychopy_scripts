@@ -19,6 +19,73 @@ info['participant'] = 8
 info['startTime'] = str(time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
 taskName = 'pilot'
 
+
+filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName)
+writeHeader = False
+
+
+reward = [2, 4, 6, 9, 12]
+effort = [1, 2, 4, 6, 7]
+
+reps = 1
+
+'''GENERATE TRIALS FOR EFFORT/REWARD CHOICE TASK'''
+rewardEffortCombi = [(r, e) for r in reward for e in effort] # all combinations
+rewardEffortCombi = pd.DataFrame(rewardEffortCombi)
+rewardEffortCombi.columns = ['reward', 'effort']
+rewardEffortCombi['beneficiary'] = 'self'
+
+rewardEffortCombi2 = [(r, e) for r in reward for e in effort] # all combinations
+rewardEffortCombi2 = pd.DataFrame(rewardEffortCombi2)
+rewardEffortCombi2.columns = ['reward', 'effort']
+rewardEffortCombi2['beneficiary'] = 'charity'
+
+rewardEffortCombi3 = [(r, e) for r in reward for e in effort] # all combinations
+rewardEffortCombi3 = pd.DataFrame(rewardEffortCombi3)
+rewardEffortCombi3.columns = ['reward', 'effort']
+rewardEffortCombi3['beneficiary'] = 'another student'
+
+trialsInBlock = pd.concat([rewardEffortCombi, rewardEffortCombi2, rewardEffortCombi3] * reps, ignore_index=True)
+
+if blockType == 'self':
+    trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'self']
+elif blockType == 'charity':
+    trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'charity']
+elif blockType == 'mixed':
+    trialsInBlock = trialsInBlock
+
+trialsInBlock = trialsInBlock.reindex(np.random.permutation(trialsInBlock.index)).reset_index(drop=True) # shuffle
+
+trialsInBlock['rewardJittered'] = trialsInBlock.reward
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # assign conditions based on participant number and session
 if info['participant'] % 2 == 1: # if odd number, control
     info['expCondition'] = 'control'
@@ -32,10 +99,6 @@ elif info['participant'] % 2 == 0: # if even number, training
         info['taskOrder'] = 'update-switch'
     elif info['participant'] % 4 == 0:
         info['taskOrder'] = 'switch-update'
-
-
-filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName)
-
 
 
 
