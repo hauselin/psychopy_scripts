@@ -18,6 +18,9 @@ monitor = 'iMac'
 
 stimulusDir = 'Stimuli' + os.path.sep # stimulus directory/folder/path
 
+rewardLevels = [2, 4, 6, 9, 12]
+effortLevels = [1, 2, 4, 6, 7]
+
 #import csv file with unique trials
 #trialsCSV = "GoNoGo.csv"
 #trialsList = pd.read_csv(stimulusDir + trialsCSV)
@@ -611,7 +614,12 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
     rewardEffortCombi2.columns = ['reward', 'effort']
     rewardEffortCombi2['beneficiary'] = 'charity'
 
-    trialsInBlock = pd.concat([rewardEffortCombi, rewardEffortCombi2] * reps, ignore_index=True)
+    rewardEffortCombi3 = [(r, e) for r in reward for e in effort] # all combinations
+    rewardEffortCombi3 = pd.DataFrame(rewardEffortCombi3)
+    rewardEffortCombi3.columns = ['reward', 'effort']
+    rewardEffortCombi3['beneficiary'] = 'otherperson'
+
+    trialsInBlock = pd.concat([rewardEffortCombi, rewardEffortCombi2, rewardEffortCombi3] * reps, ignore_index=True)
 
     if blockType == 'self':
         trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'self']
@@ -619,8 +627,10 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
         trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'charity']
     elif blockType == 'mixed':
         trialsInBlock = trialsInBlock
+    elif blockType == 'otherperson':
+        trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'otherperson']
 
-    trialsInBlock = trialsInBlock.reindex(np.random.permutation(trialsInBlock.index)).reset_index(drop=True) # shuffle
+    trialsInBlock = trialsInBlock.reindex(np.random.permutation(trialsInBlock.index)).reset_index(drop=True) # shuffle/randomize order
 
     trialsInBlock['rewardJittered'] = trialsInBlock.reward
 
@@ -772,6 +782,8 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
             beneficiaryText.setText(charityChosen)
         elif thisTrial['beneficiary'] == 'self':
             beneficiaryText.setText('self')
+        elif thisTrial['beneficiary'] == 'otherperson':
+            beneficiaryText.setText('another student')
 
         beneficiaryText.setAutoDraw(True)
 
@@ -1541,7 +1553,7 @@ def showCredit():
 
 
 
-
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=rewardLevels, effort=effortLevels)
 
 
 #######################################################################
@@ -1576,40 +1588,40 @@ showInstructions(text =
 "You have 2 seconds to indicate your answer (using the F and J keys). If no choice is made, it'll be considered wrong and the task will proceed."])
 
 showInstructions(text = ["Let's try adding 1 to each digit!"])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=1, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
-showInstructions(text = ["That was add 1. If anything's unclear, please ask the research assistant now!"])
+runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=1, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["That was add 1. If anything's unclear, please ask the research assistant now."])
 
-showInstructions(text = ["Now let's try adding 3 to each digit."])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=3, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
-showInstructions(text = ["That was add 3."])
+showInstructions(text = ["Now let's try adding 2 to each digit."])
+runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=2, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["That was add 2."])
 
-showInstructions(text = ["Now let's do add 5."])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=5, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
-showInstructions(text = ["That was add 5."])
+showInstructions(text = ["Now let's do add 4."])
+runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=4, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["That was add 4."])
+
+showInstructions(text = ["Let's try add 6 now!"])
+runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=6, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["That was add 6."])
 
 showInstructions(text = ["Let's try add 7 now!"])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=7, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=7, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
 showInstructions(text = ["That was add 7."])
-
-showInstructions(text = ["Let's try add 9 now!"])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=9, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
-showInstructions(text = ["That was add 9."])
 
 showInstructions(text = ["Finally, let's try add 0. When adding 0, all you have to do is remember the three digits. In fact, the two response options will be identical and either will be correct. So as long as you make a response in under 2 seconds, you'll be correct!"])
 
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=0, digitsToModify=0, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=1, digits=3, digitChange=0, digitsToModify=0, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
 showInstructions(text = ["That was add 0."])
 
 ''' effort questions '''
 showInstructions(text = ["Now you'll answer a few questions about the math task."])
 
-effortQuestions = ['How much effort did add 0 require?', 'How much effort did add 1 require?', 'How much effort did add 3 require?', 'How much effort did add 5 require?', 'How much effort did add 7 require?', 'How much effort did add 9 require?']
+effortQuestions = ['How much effort did add 0 require?', 'How much effort did add 1 require?', 'How much effort did add 2 require?', 'How much effort did add 4 require?', 'How much effort did add 6 require?', 'How much effort did add 7 require?']
 random.shuffle(effortQuestions)
 
 presentQuestions(questionName='effortFrustrateReport', questionList=effortQuestions, blockType='pre', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['none at all', 'very much'])
 
 ''' frustrate questions '''
-frustrateQuestions = ['How frustrating was add 0?', 'How frustrating was add 1?', 'How frustrating was add 3?', 'How frustrating was add 5?', 'How frustrating was add 7?', 'How frustrating was add 9?']
+frustrateQuestions = ['How frustrating was add 0?', 'How frustrating was add 1?', 'How frustrating was add 2?', 'How frustrating was add 4?', 'How frustrating was add 6?', 'How frustrating was add 7?']
 random.shuffle(frustrateQuestions)
 
 presentQuestions(questionName='effortFrustrateReport', questionList=frustrateQuestions, blockType='pre', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['not at all', 'very much'])
@@ -1620,7 +1632,7 @@ showInstructions(text = [
 "You'll be doing many of these addition tasks later on, and the task difficulty depends on your choices during a decision making task.",
 "In this decision task, you'll have to choose between two options: doing add 0 or add 1, 3, 5, 7, or 9). Each option will have a specific number of credits associated with it. If you perform your chosen task correctly at least 90% of the time, you'll get those credits, which will be converted to money (Amazon voucher to be emailed to you).",
 "Add 0 will ALWAYS be one of the available options, and you will ALWAYS receive 1 credit for choosing to do add 0 (ADD 0 1 CREDIT)",
-"The other option will vary in terms of difficulty (add 1, 3, 5, 7, or 9) and credits (2 to 12 credits).",
+"The other option will vary in terms of difficulty (e.g., add 2, 4) and credits (2 to 12 credits).",
 "For example, you might see these two options on the screen: add 0 for 1 credit vs add 3 for 5 credits. The add 0 for 1 credit option means if you choose it and perform accurately on the add 0 task, you'll get 1 credit. And if you choose the add 3 for 5 credits option, you'll add 3 to each digit to get 5 credits.",
 "Here is one more example: add 0 for 1 credit vs add 7 for 2 credits",
 "If you don't have any questions, we'll practice a bit now.",
@@ -1662,7 +1674,7 @@ showInstructions(text = [
 "You'll have opportunities to take breaks during the experiment."
 ])
 
-runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2, 4, 6, 9, 12], effort=[1, 3, 5, 7, 9])
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=rewardLevels, effort=effortLevels)
 
 showInstructions(text = ["Take a break if you'd like to."])
 
@@ -1707,4 +1719,5 @@ showInstructions(text = ["That's the end of the experiment. Thanks so much for p
 if sendTTL:
     port.setData(255) # mark end of experiment
 
+win.close()
 core.quit() # quit PsychoPy

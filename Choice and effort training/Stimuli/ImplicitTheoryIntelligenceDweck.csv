@@ -1,0 +1,9 @@
+qNo,question,scale
+implicitIQQ1R,I don't think I personally can do much to increase my intelligence.,entity
+implicitIQQ2R,My intelligence is something about me that I personally can't change very much.,entity
+implicitIQQ3R,"To be honest, I don't think I can really change how intelligent I am.",entity
+implicitIQQ4R,"I can learn new things, but I don't have the ability to change my basic intelligence.",entity
+implicitIQQ5,With enough time and effort I think I could significantly improve my intelligence level.,incremental
+implicitIQQ6,I believe I can always substantially improve on my intelligence.,incremental
+implicitIQQ7,"Regardless of my current intelligence level, I think I have the capacity to change it quite a bit.",incremental
+implicitIQQ8,I believe I have the ability to change my basic intelligence level considerable over time.,incremental
