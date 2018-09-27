@@ -1,31 +1,104 @@
 # scratchpad for writing psychopy coder scripts
 
-source activate python27
-python
+# source activate python27
+# python
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os, time
-
 os.chdir('/Users/Hause/Dropbox/Working Projects/PsychoPy Scripts/Prosocial effort/')
 os.getcwd()
 
 # col width 15, don't wrap dataframe across pages
-pd.set_option('display.max_colwidth', 15, 'display.expand_frame_repr', False, 'display.max_rows', 10)
+pd.set_option('display.max_colwidth', 60, 'display.expand_frame_repr', False, 'display.max_rows', 20)
+
+import os
+import pandas as pd
+import numpy as np
+import itertools as it
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random
+
+coordinatesX = np.linspace(start=-0.8, stop=0.8, num=8)
+coordinatesY = np.linspace(start=-0.8, stop=0.8, num=6)
+
+coordinatesAll = list(it.product(coordinatesX,coordinatesY))
+len(coordinatesAll)
+coordinatesDf = pd.DataFrame(coordinatesAll,columns=['x', 'y'])
+
+coordinatesDf['quadrant'] = 'quadrant'
+coordinatesDf.loc[(coordinatesDf['x'] < 0) & (coordinatesDf['y'] > 0), 'quadrant'] = 'quadrant1'
+coordinatesDf.loc[(coordinatesDf['x'] > 0) & (coordinatesDf['y'] > 0), 'quadrant'] = 'quadrant2'
+coordinatesDf.loc[(coordinatesDf['x'] < 0) & (coordinatesDf['y'] < 0), 'quadrant'] = 'quadrant3'
+coordinatesDf.loc[(coordinatesDf['x'] > 0) & (coordinatesDf['y'] < 0), 'quadrant'] = 'quadrant4'
+coordinatesDf
+
+nStimuli = 24
+nQuadrants = 4
+coordinatesPerQuadrant = coordinatesDf.shape[0]/nQuadrants
+stimuliPerQuadrant = nStimuli/nQuadrants
+
+# randomize distractor and target locations on this trial
+coordinatesThisTrial = coordinatesDf.groupby("quadrant").apply(lambda x: x.sample(stimuliPerQuadrant)).reset_index(drop=True)
+coordinatesThisTrial['stimulusType'] = 'distractor'
+coordinatesThisTrial.loc[random.randint(0, coordinatesThisTrial.shape[0]-1), 'stimulusType'] = 'target'
+
+# add some jitter at each coordinate
+coordinatesThisTrial['x'] = coordinatesThisTrial['x'] + np.random.uniform(-0.1, 0.1, coordinatesThisTrial.shape[0])
+coordinatesThisTrial['y'] = coordinatesThisTrial['y'] + np.random.uniform(-0.1, 0.1, coordinatesThisTrial.shape[0])
+
+plt.close()
+plt.scatter(coordinatesThisTrial['x'], coordinatesThisTrial['y'])
+plt.show()
+
+
+
+
+
+
+
+exec('x = 3')
+eval('3 < 1')
+
+
+
+
+distractorList = {}
+distractorList
+
+for distractorI in range(5):
+    exec("distractorList['distractor'+str(distractorI+1)] = distractorI+10")
+
+distractorList
+
+
+
+
+
+
 
 info = {}
 info['participant'] = 8
+info['age'] = 19
+info['gender'] = 'female'
+info['handedness'] = 'right'
+info['ethnicity'] = 'asian'
+info['ses'] = 8
+info['scriptDate'] = '26-09-18'
 info['startTime'] = str(time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
-taskName = 'pilot'
-
+taskName = 'visulSearch'
+info['endTime'] = ''
+info['fixationFrames'] = 180
+blockType = 'actual'
+rtMaxFrames = None
 
 filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName)
 writeHeader = False
 
-
 reward = [2, 4, 6, 9, 12]
-effort = [1, 2, 4, 6, 7]
+effort = [1, 3, 5, 6, 7]
 
 reps = 1
 
@@ -57,6 +130,10 @@ elif blockType == 'mixed':
 trialsInBlock = trialsInBlock.reindex(np.random.permutation(trialsInBlock.index)).reset_index(drop=True) # shuffle
 
 trialsInBlock['rewardJittered'] = trialsInBlock.reward
+
+
+
+
 
 
 
