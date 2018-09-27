@@ -1,2 +1,0 @@
-participant,age,trialNo,blockType,task,fixationFrames,postFixationFrames,targetFrames,startTime,endTime,blockNumber,elapsedTime,resp,rt,iti,responseTTL,choice,choiceText,overallTrialNum,acc,accUpdating,rtUpdating,reward,effort,beneficiary,rewardJittered
-1,1,1,mixed,effortRewardChoice,18,38.0,300,2018-09-19-22-58-17,2018-09-19-22-58-24,1,6.771159887313843,j,3.876530885696411,0.7,16.0,,effortful,1,,0.0,,6,6,otherperson,6

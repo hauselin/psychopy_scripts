@@ -1,0 +1,15 @@
+qNo,question,scale
+eiQ1,"If I see someone who is excited, I will feel excited myself.",empathy
+eiQ2,"I sometimes find myself feeling the emotions of the people around me, even if I don't try to feel what they're feeling.",empathy
+eiQ3,"If I'm watching a movie and a character injures their leg, I will feel pain in my leg.",empathy
+eiQ4,"If I hear a story in which someone is scared, I will imagine how scared I would be in that situation and begin to feel scared myself.",empathy
+eiQ5,"If I hear an awkward story about someone else, I might feel a little embarrassed.",empathy
+eiQ6,I can't watch shows in which an animal is being hunted one another because I feel nervous as if I am being hunted.,empathy
+eiQ7,"If I see someone fidgeting, I'll start feeling anxious too.",empathy
+eiQ8,"If I see someone else yawn, I am also likely to yawn.",behavConta
+eiQ9,"If I see someone vomit, I will gag. ",behavConta
+eiQ10,I catch myself crossing my arms or legs just like the person I'm talking to.,behavConta
+eiQ11,"If I see a video of a baby smiling, I find myself smiling.",behavConta
+eiQ12,"If I see someone suddenly looking away, I'll automatically look in the direction they are looking.",behavConta
+eiQ13,"If I'm watching someone walking on a balance beam, I will lean when they lean.",behavConta
+eiQ14,"If I'm having a conversation with someone and they scratch their nose, I will also scratch my nose.",behavConta

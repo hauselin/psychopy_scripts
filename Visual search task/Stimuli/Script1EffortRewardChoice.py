@@ -3,7 +3,6 @@ import numpy as np
 import scipy as sp
 import random, os, time
 from psychopy import visual, core, event, data, gui, logging, parallel, monitors
-from scipy import stats
 
 # set DEBUG mode: if True, participant ID will be 999 and display will not be fullscreen. If False, will have to provide participant ID and will be in fullscreen mode
 DEBUG = False
@@ -18,9 +17,6 @@ monitor = 'iMac'
 
 stimulusDir = 'Stimuli' + os.path.sep # stimulus directory/folder/path
 
-rewardLevels = [2, 4, 6, 9, 12]
-effortLevels = [1, 3, 5, 6, 7]
-
 #import csv file with unique trials
 #trialsCSV = "GoNoGo.csv"
 #trialsList = pd.read_csv(stimulusDir + trialsCSV)
@@ -30,16 +26,16 @@ info = {} # create empty dictionary to store stuff
 
 if DEBUG:
     fullscreen = False #set fullscreen variable = False
-    # logging.console.setLevel(logging.DEBUG)
+    logging.console.setLevel(logging.DEBUG)
     info['participant'] = 999 #let 999 = debug participant no.
     info['email'] = 'xxx@gmail.com'
     info['age'] = 18
 else: #if DEBUG is not False... (or True)
     fullscreen = True #set full screen
-    # logging.console.setLevel(logging.WARNING)
-    info['participant'] = '' #dict key to store participant no.
-    info['email'] = ''
-    info['age'] = ''
+    logging.console.setLevel(logging.WARNING)
+    info['participant'] = '7' #dict key to store participant no.
+    info['email'] = 'xxx@gmail.com'
+    info['age'] = 18
     #present dialog to collect info
     dlg = gui.DlgFromDict(info) #create a dialogue box (function gui)
     if not dlg.OK: #if dialogue response is NOT OK, quit
@@ -49,7 +45,6 @@ else: #if DEBUG is not False... (or True)
 ''' DO NOT EDIT BEGIN '''
 info['participant'] = int(info['participant'])
 info['age'] = int(info['age'])
-info['email'] = str(info['email'])
 ''' DO NOT EDIT BEGIN '''
 
 info['fixationFrames'] = 18 #frames
@@ -63,28 +58,25 @@ f = f[f >= 36] # min
 info['postFixationFrames'] = f
 info['targetFrames'] = 180 #frames (at 60Hz, 60 frames = 1 second); max time to wait for response
 info['blockEndPause'] = 15 #frames
-info['feedbackTime'] = 42 #frames
+info['feedbackTime'] = 48 #frames
 info['startTime'] = str(time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())) #create str of current date/time
 info['endTime'] = '' # to be saved later on
 # info['ITIDuration'] = np.arange(0.50, 0.81, 0.05) #a numpy array of ITI in seconds (to be randomly selected later for each trial)
+# iti duration to be drawn from from exponential distribution (0.5 to 1.5)
 seconds = sp.stats.expon.rvs(size=10000, scale=0.4) # exponential distribution
-seconds = np.around(seconds/0.05) * 0.05 # round to nearest 0.05
-seconds = seconds[seconds <= 1] # max
-seconds = seconds[seconds >= 0.5] # min
+seconds = np.around(seconds/0.05) * 0.05
+seconds = seconds[seconds <= 1.50] # max
+seconds = seconds[seconds >= 0.50] # min
 info['ITIDuration'] = seconds
-
-# runMentalMathBlockAccuracy = 0
-# runMentalMathBlockRt = np.nan
+runMentalMathBlockAccuracy = 0
+runMentalMathBlockRt = np.nan
 charityChosen = 'charity'
-
-info['mentalMathUpdatingCurrentTrialAcc'] = 0
-info['mentalMathUpdatingCurrentTrialRt'] = np.nan
 
 globalClock = core.Clock() # create and start global clock to track OVERALL elapsed time
 ISI = core.StaticPeriod(screenHz = 60) # function for setting inter-trial interval later
 
 # create window to draw stimuli on
-win = visual.Window(size = (1300, 900), fullscr = fullscreen, units = 'norm', monitor = monitor, colorSpace = 'rgb', color = (-1, -1, -1))
+win = visual.Window(size = (800, 600), fullscr = fullscreen, units = 'norm', monitor = monitor, colorSpace = 'rgb', color = (-1, -1, -1))
 #create mouse
 mouse = event.Mouse(visible = False, win = win)
 mouse.setVisible(0) # make mouse invisible
@@ -92,8 +84,6 @@ mouse.setVisible(0) # make mouse invisible
 if sendTTL:
     port = parallel.ParallelPort(address = parallelPortAddress)
     port.setData(0) #make sure all pins are low
-
-
 
 ########################################################################
 #CUSTOM FUNCTIONS TO DO STUFF
@@ -128,7 +118,7 @@ def showInstructions(text, timeBeforeAutomaticProceed=0, timeBeforeShowingSpace 
             while instructTimer.getTime() < timeBeforeAutomaticProceed:
                 if event.getKeys(keyList = ['backslash']):
                     core.quit()
-                elif event.getKeys(['bracketright']):
+                elif event.getKeys(['bracketright']):  block
                     return None
                 instructText.draw(); win.flip()
         elif timeBeforeAutomaticProceed == 0 and timeBeforeShowingSpace != 0:
@@ -166,8 +156,8 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
     # csv filename to store data
     filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName)
     # create name for logfile
-    # logFilename = "{:03d}-{}-{}".format(int(info['participant']), info['startTime'], taskName)
-    # logfile = logging.LogFile(logFilename + ".log", filemode = 'w', level = logging.EXP) #set logging information (core.quit() is required at the end of experiment to store logging info!!!)
+    logFilename = "{:03d}-{}-{}".format(int(info['participant']), info['startTime'], taskName)
+    logfile = logging.LogFile(logFilename + ".log", filemode = 'w', level = logging.EXP) #set logging information (core.quit() is required at the end of experiment to store logging info!!!)
     #logging.console.setLevel(logging.DEBUG) #set COSNSOLE logging level
 
     '''DO NOT EDIT BEGIN'''
@@ -180,65 +170,65 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
     except: #if fail to read csv, then it's trial 1
         writeHeader = True
 
-    trialsDfMath = pd.DataFrame(index=np.arange(trials)) # create empty dataframe to store trial info
+    trialsDf = pd.DataFrame(index=np.arange(trials)) # create empty dataframe to store trial info
 
     #if this is a practice block
     if blockType == 'practice':
-        trialsDfMath = trialsDfMath[0:practiceTrials] #number of practice trials to present
+        trialsDf = trialsDf[0:practiceTrials] #number of practice trials to present
     '''DO NOT EDIT END'''
 
     #store additional info in dataframe
-    trialsDfMath['participant'] = int(info['participant'])
+    trialsDf['participant'] = int(info['participant'])
     try:
-        trialsDfMath['age'] = int(info['age'])
-        trialsDfMath['gender'] = info['gender']
-        trialsDfMath['handedness'] = info['handedness']
-        trialsDfMath['ethnicity'] = info['ethnicity']
-        trialsDfMath['ses'] = info['ses']
+        trialsDf['age'] = int(info['age'])
+        trialsDf['gender'] = info['gender']
+        trialsDf['handedness'] = info['handedness']
+        trialsDf['ethnicity'] = info['ethnicity']
+        trialsDf['ses'] = info['ses']
     except:
         pass
-    trialsDfMath['trialNo'] = range(1, len(trialsDfMath) + 1) #add trialNo
-    trialsDfMath['blockType'] = blockType #add blockType
-    trialsDfMath['task'] = taskName #task name
-    trialsDfMath['fixationFrames'] = info['fixationFrames']
-    trialsDfMath['postFixationFrames'] = np.nan
+    trialsDf['trialNo'] = range(1, len(trialsDf) + 1) #add trialNo
+    trialsDf['blockType'] = blockType #add blockType
+    trialsDf['task'] = taskName #task name
+    trialsDf['fixationFrames'] = info['fixationFrames']
+    trialsDf['postFixationFrames'] = np.nan
     if rtMaxFrames is None:
-        trialsDfMath['targetFrames'] = info['targetFrames']
+        trialsDf['targetFrames'] = info['targetFrames']
     else:
-        trialsDfMath['targetFrames'] = rtMaxFrames
-    trialsDfMath['startTime'] = info['startTime']
-    trialsDfMath['endTime'] = info['endTime']
+        trialsDf['targetFrames'] = rtMaxFrames
+    trialsDf['startTime'] = info['startTime']
+    trialsDf['endTime'] = info['endTime']
 
     #create variables to store data later
-    trialsDfMath['blockNumber'] = 0 #add blockNumber
-    trialsDfMath['elapsedTime'] = np.nan
-    trialsDfMath['resp'] = None
-    trialsDfMath['rt'] = np.nan
-    trialsDfMath['iti'] = np.nan
-    trialsDfMath['responseTTL'] = np.nan
-    trialsDfMath['choice'] = np.nan
-    trialsDfMath['overallTrialNum'] = 0 #cannot use np.nan because it's a float, not int!
-    trialsDfMath['digits'] = digits
-    trialsDfMath['digitChange'] = digitChange
-    trialsDfMath['digitsToModify'] = digitsToModify
-    trialsDfMath['testDigits'] = None
-    trialsDfMath['correctAnswer'] = None
-    trialsDfMath['wrongAnswer'] = None
-    trialsDfMath['correctKey'] = None
-    trialsDfMath['acc'] = np.nan
+    trialsDf['blockNumber'] = 0 #add blockNumber
+    trialsDf['elapsedTime'] = np.nan
+    trialsDf['resp'] = None
+    trialsDf['rt'] = np.nan
+    trialsDf['iti'] = np.nan
+    trialsDf['responseTTL'] = np.nan
+    trialsDf['choice'] = np.nan
+    trialsDf['overallTrialNum'] = 0 #cannot use np.nan because it's a float, not int!
+    trialsDf['digits'] = digits
+    trialsDf['digitChange'] = digitChange
+    trialsDf['digitsToModify'] = digitsToModify
+    trialsDf['testDigits'] = None
+    trialsDf['correctAnswer'] = None
+    trialsDf['wrongAnswer'] = None
+    trialsDf['correctKey'] = None
+    trialsDf['acc'] = np.nan
 
     ''' define number sequence and correct/incorrect responses for block '''
     # timing for updating task
     testDigitFrames = 30 # frames to show each test digit
-    postTestDigitBlankFrames = 42 # blank frames after each digit
+    postTestDigitBlankFrames = 60 # blank frames after each digit
     postAllTestDigitBlankFrames = 30 # blank frames after all digits
 
-    trialsDfMath['testDigitFrames'] = testDigitFrames
-    trialsDfMath['postTestDigitBlankFrames'] = postTestDigitBlankFrames
-    trialsDfMath['postAllTestDigitBlankFrames'] = postAllTestDigitBlankFrames
+    trialsDf['testDigitFrames'] = testDigitFrames
+    trialsDf['postTestDigitBlankFrames'] = postTestDigitBlankFrames
+    trialsDf['postAllTestDigitBlankFrames'] = postAllTestDigitBlankFrames
 
     # populate dataframe with test number sequences and answers
-    for rowI in range(0, trialsDfMath.shape[0]):
+    for rowI in range(0, trialsDf.shape[0]):
         digitsList = random.sample(range(0, 10), digits) # randomly generate digits in given range without replacement
         digitsListAnswer = []
         for digitI in digitsList:
@@ -254,7 +244,7 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
             #print "new list is {0}".format(digitsListAnswer)
 
         # print "old list is {0}".format(digitsList)
-        # print "new list is {0}".format(digitsListAnswer)
+        #print "new list is {0}".format(digitsListAnswer)
 
         correctAnswer = ''.join(str(x) for x in digitsListAnswer) # as 1 string
         wrongAnswerList = digitsListAnswer[:]
@@ -275,28 +265,26 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
         wrongAnswer = ''.join(str(x) for x in wrongAnswerList) # as 1 string
 
         # store in dataframe
-        trialsDfMath.loc[rowI, 'testDigits'] = ''.join(str(x) for x in digitsList)
-        trialsDfMath.loc[rowI, 'correctAnswer'] = ''.join(str(x) for x in correctAnswer)
-        trialsDfMath.loc[rowI, 'wrongAnswer'] = ''.join(str(x) for x in wrongAnswer)
-        trialsDfMath.loc[rowI, 'correctKey'] = random.choice(['f', 'j'])
+        trialsDf.loc[rowI, 'testDigits'] = ''.join(str(x) for x in digitsList)
+        trialsDf.loc[rowI, 'correctAnswer'] = ''.join(str(x) for x in correctAnswer)
+        trialsDf.loc[rowI, 'wrongAnswer'] = ''.join(str(x) for x in wrongAnswer)
+        trialsDf.loc[rowI, 'correctKey'] = random.choice(['f', 'j'])
 
     '''DO NOT EDIT BEGIN'''
     #Assign blockNumber based on existing csv file. Read the csv file and find the largest block number and add 1 to it to reflect this block's number.
     try:
         blockNumber = max(pd.read_csv(filename)['blockNumber']) + 1
-        trialsDfMath['blockNumber'] = blockNumber
+        trialsDf['blockNumber'] = blockNumber
     except: #if fail to read csv, then it's block 1
         blockNumber = 1
-        trialsDfMath['blockNumber'] = blockNumber
+        trialsDf['blockNumber'] = blockNumber
     '''DO NOT EDIT END'''
 
 
     #create stimuli that are constant for entire block
     #draw stimuli required for this block
     #[1.0,-1,-1] is red; #[1, 1, 1] is white
-    fixation = visual.TextStim(win = win, units = 'norm', height = 0.08, ori = 0, name = 'target', text = '+', font = 'Courier New Bold', colorSpace = 'rgb', color = [-.3, -.3, -.3], opacity = 1)
-
-    reminderText = visual.TextStim(win = win, units = 'norm', height = 0.045, ori = 0, name = 'target', text = "+{:.0f}".format(digitChange), font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0, 0.17))
+    fixation = visual.TextStim(win = win, units = 'norm', height = 0.08, ori = 0, name = 'target', text = '+', font = 'Courier New Bold', colorSpace = 'rgb', color = [1, -1, -1], opacity = 1)
 
     testDigit = visual.TextStim(win = win, units = 'norm', height = 0.20, ori = 0, name = 'target', text = '0000', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1)
 
@@ -304,31 +292,23 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
 
     wrongDigits = visual.TextStim(win = win, units = 'norm', height = 0.12, ori = 0, name = 'target', text = '0000', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1)
 
-    keyD = visual.TextStim(win = win, units = 'norm', height = 0.045, ori = 0, name = 'target', text = 'D', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.3, 0.1))
-
-    keyF = visual.TextStim(win = win, units = 'norm', height = 0.045, ori = 0, name = 'target', text = 'F', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.12, 0.1))
-
-    keyJ = visual.TextStim(win = win, units = 'norm', height = 0.045, ori = 0, name = 'target', text = 'J', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0.12, 0.1))
-
-    keyK = visual.TextStim(win = win, units = 'norm', height = 0.045, ori = 0, name = 'target', text = 'K', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0.3, 0.1))
-
 
 
     #create clocks to collect reaction and trial times
     respClock = core.Clock()
     trialClock = core.Clock()
 
-    for mathTrialI, thisTrialMath in trialsDfMath.iterrows(): #for each trial...
+    for i, thisTrial in trialsDf.iterrows(): #for each trial...
         ''' DO NOT EDIT BEGIN '''
         #add overall trial number to dataframe
         try: #try reading csv file dimensions (rows = no. of trials)
-            #thisTrialMath['overallTrialNum'] = pd.read_csv(filename).shape[0] + 1
-            trialsDfMath.loc[mathTrialI, 'overallTrialNum'] = pd.read_csv(filename).shape[0] + 1
-            ####print 'Overall Trial No: %d' %thisTrialMath['overallTrialNum']
+            #thisTrial['overallTrialNum'] = pd.read_csv(filename).shape[0] + 1
+            trialsDf.loc[i, 'overallTrialNum'] = pd.read_csv(filename).shape[0] + 1
+            ####print 'Overall Trial No: %d' %thisTrial['overallTrialNum']
         except: #if fail to read csv, then it's trial 1
-            #thisTrialMath['overallTrialNum'] = 1
-            trialsDfMath.loc[mathTrialI, 'overallTrialNum'] = 1
-            ####print 'Overall Trial No: %d' %thisTrialMath['overallTrialNum']
+            #thisTrial['overallTrialNum'] = 1
+            trialsDf.loc[i, 'overallTrialNum'] = 1
+            ####print 'Overall Trial No: %d' %thisTrial['overallTrialNum']
 
         if sendTTL and not blockType == 'practice':
             port.setData(0) #make sure all pins are low before new trial
@@ -337,8 +317,8 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
         # if there's a max time for this block, end block when time's up
         if blockMaxTimeSeconds is not None:
             try:
-                if trialsDfMath.loc[mathTrialI-1, 'elapsedTime'] - trialsDfMath.loc[0, 'elapsedTime'] >= blockMaxTimeSeconds:
-                    print trialsDfMath.loc[mathTrialI-1, 'elapsedTime'] - trialsDfMath.loc[0, 'elapsedTime']
+                if trialsDf.loc[i-1, 'elapsedTime'] - trialsDf.loc[0, 'elapsedTime'] >= blockMaxTimeSeconds:
+                    print trialsDf.loc[i-1, 'elapsedTime'] - trialsDf.loc[0, 'elapsedTime']
                     print "block time out"
                     return None
             except:
@@ -366,14 +346,12 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
         #2: postfixation black screen
         postFixationBlankFrames = int(random.choice(info['postFixationFrames']))
         ###print postFixationBlankFrames
-        trialsDfMath.loc[mathTrialI, 'postFixationFrames'] = postFixationBlankFrames #store in dataframe
+        trialsDf.loc[i, 'postFixationFrames'] = postFixationBlankFrames #store in dataframe
         for frameN in range(postFixationBlankFrames):
             win.flip()
 
-        reminderText.setAutoDraw(True)
-
         #3: draw stimulus (digits) one by one
-        for d in thisTrialMath['testDigits']:
+        for d in thisTrial['testDigits']:
             testDigit.setText(d)
             testDigit.setAutoDraw(True)
             for frameN in range(testDigitFrames):
@@ -383,175 +361,153 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
             for frameN in range(postTestDigitBlankFrames):
                 win.flip()
 
-        reminderText.setAutoDraw(False)
-
         for frameN in range(postAllTestDigitBlankFrames):
             win.flip()
 
         #4: draw response options
-        correctDigits.setText(thisTrialMath['correctAnswer'])
-        wrongDigits.setText(thisTrialMath['wrongAnswer'])
+        correctDigits.setText(thisTrial['correctAnswer'])
+        wrongDigits.setText(thisTrial['wrongAnswer'])
 
         # set option positions
-        if thisTrialMath['correctKey'] == "f":
+        if thisTrial['correctKey'] == "f":
             correctDigits.setPos((-0.12, 0.0)) # left
             wrongDigits.setPos((0.12, 0.0)) # right
-        elif thisTrialMath['correctKey'] == "j":
+        elif thisTrial['correctKey'] == "j":
             correctDigits.setPos((0.12, 0.0)) # right
             wrongDigits.setPos((-0.12, 0.0)) # left
 
         correctDigits.setAutoDraw(True)
         wrongDigits.setAutoDraw(True)
-        keyF.setAutoDraw(True)
-        keyJ.setAutoDraw(True)
 
         # if titrating, determine stuff automatically
         if titrate:
             # determine response duration
             try:
                 last2Trials = pd.read_csv(filename).tail(2).reset_index()
-                if last2Trials.loc[1, 'acc'] == 1 and trialsDfMath.loc[mathTrialI, 'targetFrames'] >= 24: # if previous trial correct
-                    trialsDfMath.loc[mathTrialI, 'targetFrames'] = last2Trials.loc[1, 'targetFrames'] - 6 # minus 6 frames (100 ms)
-                    trialsDfMath.loc[mathTrialI, 'postTestDigitBlankFrames'] = trialsDfMath.loc[mathTrialI-1, 'postTestDigitBlankFrames'] - 1
+                if last2Trials.loc[1, 'acc'] == 1 and trialsDf.loc[i, 'targetFrames'] >= 24: # if previous trial correct
+                    trialsDf.loc[i, 'targetFrames'] = last2Trials.loc[1, 'targetFrames'] - 6 # minus 6 frames (100 ms)
+                    trialsDf.loc[i, 'postTestDigitBlankFrames'] = trialsDf.loc[i-1, 'postTestDigitBlankFrames'] - 1
                 elif last2Trials.loc[0:1, 'acc'].sum() == 0:
-                    trialsDfMath.loc[mathTrialI, 'targetFrames'] = last2Trials.loc[1, 'targetFrames'] + 6 # plus 6 frames (100 ms)
-                    trialsDfMath.loc[mathTrialI, 'postTestDigitBlankFrames'] = trialsDfMath.loc[mathTrialI-1, 'postTestDigitBlankFrames'] + 1
+                    trialsDf.loc[i, 'targetFrames'] = last2Trials.loc[1, 'targetFrames'] + 6 # plus 6 frames (100 ms)
+                    trialsDf.loc[i, 'postTestDigitBlankFrames'] = trialsDf.loc[i-1, 'postTestDigitBlankFrames'] + 1
                 else:
-                    trialsDfMath.loc[mathTrialI, 'targetFrames'] = last2Trials.loc[1, 'targetFrames']
-                    trialsDfMath.loc[mathTrialI, 'postTestDigitBlankFrames'] = trialsDfMath.loc[mathTrialI-1, 'postTestDigitBlankFrames']
-                # print trialsDfMath.loc[mathTrialI, 'targetFrames']
+                    trialsDf.loc[i, 'targetFrames'] = last2Trials.loc[1, 'targetFrames']
+                    trialsDf.loc[i, 'postTestDigitBlankFrames'] = trialsDf.loc[i-1, 'postTestDigitBlankFrames']
+                # print trialsDf.loc[i, 'targetFrames']
             except:
                 pass
-
-        try:
-            targetFramesCurrentTrial = int(trialsDfMath.loc[mathTrialI, 'targetFrames'])
-        except:
-            try:
-                targetFramesCurrentTrial = int(rtMaxFrames)
-            except:
-                try:
-                    targetFramesCurrentTrial = int(info['targetFrames'])
-                except:
-                    targetFramesCurrentTrial = 180
 
         win.callOnFlip(respClock.reset) #reset response clock on next flip
         win.callOnFlip(trialClock.reset) #reset trial clock on next flip
 
         event.clearEvents() #clear events
 
-        for frameN in range(targetFramesCurrentTrial):
+        for frameN in range(int(trialsDf.loc[i, 'targetFrames'])):
             if frameN == 0: #on first frame/flip/refresh
                 if sendTTL and not blockType == 'practice':
-                    win.callOnFlip(port.setData, int(thisTrialMath['TTLStim']))
+                    win.callOnFlip(port.setData, int(thisTrial['TTLStim']))
                 else:
                     pass
-                ##print "First frame in Block %d Trial %d OverallTrialNum %d" %(blockNumber, mathTrialI + 1, trialsDfMath.loc[mathTrialI, 'overallTrialNum'])
-                ##print "Stimulus TTL: %d" %(int(thisTrialMath['TTLStim']))
+                ##print "First frame in Block %d Trial %d OverallTrialNum %d" %(blockNumber, i + 1, trialsDf.loc[i, 'overallTrialNum'])
+                ##print "Stimulus TTL: %d" %(int(thisTrial['TTLStim']))
             else:
                 keys = event.getKeys(keyList = ['f', 'j', 'backslash', 'bracketright'])
-                if len(keys) > 0 and trialsDfMath.loc[mathTrialI, 'resp'] is None: #if a response has been made
-                    trialsDfMath.loc[mathTrialI, 'rt'] = respClock.getTime() #store RT
-                    trialsDfMath.loc[mathTrialI, 'resp'] = keys[0] #store response in pd df
+                if len(keys) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
+                    trialsDf.loc[i, 'rt'] = respClock.getTime() #store RT
+                    trialsDf.loc[i, 'resp'] = keys[0] #store response in pd df
 
-                    if keys[0] == 'f' and thisTrialMath['correctKey'] == 'f': #if go trial and keypress
+                    if keys[0] == 'f' and thisTrial['correctKey'] == 'f': #if go trial and keypress
                         if sendTTL and not blockType == 'practice':
                             port.setData(15) #correct response
-                        trialsDfMath.loc[mathTrialI, 'responseTTL'] = 15
-                        trialsDfMath.loc[mathTrialI, 'acc'] = 1
-                        ##print 'correct keypress: %s' %str(trialsDfMath.loc[mathTrialI, 'resp'])
+                        trialsDf.loc[i, 'responseTTL'] = 15
+                        trialsDf.loc[i, 'acc'] = 1
+                        ##print 'correct keypress: %s' %str(trialsDf.loc[i, 'resp'])
                         ##print "Response TTL: 15"
 
-                    elif keys[0] == 'j' and thisTrialMath['correctKey'] == 'j': #if go trial and keypress
+                    elif keys[0] == 'j' and thisTrial['correctKey'] == 'j': #if go trial and keypress
                         if sendTTL and not blockType == 'practice':
                             port.setData(15) #correct response
-                        trialsDfMath.loc[mathTrialI, 'responseTTL'] = 15
-                        trialsDfMath.loc[mathTrialI, 'acc'] = 1
-                        ##print 'correct keypress: %s' %str(trialsDfMath.loc[mathTrialI, 'resp'])
+                        trialsDf.loc[i, 'responseTTL'] = 15
+                        trialsDf.loc[i, 'acc'] = 1
+                        ##print 'correct keypress: %s' %str(trialsDf.loc[i, 'resp'])
                         ##print "Response TTL: 15"
 
-                    elif keys[0] == 'j' and thisTrialMath['correctKey'] == 'f': #if nogo trial and keypress
+                    elif keys[0] == 'j' and thisTrial['correctKey'] == 'f': #if nogo trial and keypress
                         if sendTTL and not blockType == 'practice':
                             port.setData(16) #incorrect response
-                        trialsDfMath.loc[mathTrialI, 'responseTTL'] = 16
-                        trialsDfMath.loc[mathTrialI, 'acc'] = 0
-                        ##print 'incorrect keypress: %s' %str(trialsDfMath.loc[mathTrialI, 'resp'])
+                        trialsDf.loc[i, 'responseTTL'] = 16
+                        trialsDf.loc[i, 'acc'] = 0
+                        ##print 'incorrect keypress: %s' %str(trialsDf.loc[i, 'resp'])
                         ##print "Response TTL: 16"
 
-                    elif keys[0] == 'f' and thisTrialMath['correctKey'] == 'j': #if nogo trial and keypress
+                    elif keys[0] == 'f' and thisTrial['correctKey'] == 'j': #if nogo trial and keypress
                         if sendTTL and not blockType == 'practice':
                             port.setData(16) #incorrect response
-                        trialsDfMath.loc[mathTrialI, 'responseTTL'] = 16
-                        trialsDfMath.loc[mathTrialI, 'acc'] = 0
-                        ##print 'incorrect keypress: %s' %str(trialsDfMath.loc[mathTrialI, 'resp'])
+                        trialsDf.loc[i, 'responseTTL'] = 16
+                        trialsDf.loc[i, 'acc'] = 0
+                        ##print 'incorrect keypress: %s' %str(trialsDf.loc[i, 'resp'])
                         ##print "Response TTL: 16"
 
                     #remove stimulus from screen
                     correctDigits.setAutoDraw(False); wrongDigits.setAutoDraw(False)
-                    keyF.setAutoDraw(False)
-                    keyJ.setAutoDraw(False)
                     win.flip() # clear screen (remove stuff from screen)
                     break #break out of the for loop when response has been made (ends trial and moves on to intertrial interval)
             win.flip()
 
         #if not response has been made within allowed time, remove stimuli and record accuracay
-        if trialsDfMath.loc[mathTrialI, 'resp'] is None: #if no response made
-            trialsDfMath.loc[mathTrialI, 'acc'] = 0
-            correctDigits.setAutoDraw(False)
-            wrongDigits.setAutoDraw(False)
-            keyF.setAutoDraw(False)
-            keyJ.setAutoDraw(False)
+        if trialsDf.loc[i, 'resp'] is None: #if no response made
+            trialsDf.loc[i, 'acc'] = 0
+            correctDigits.setAutoDraw(False); wrongDigits.setAutoDraw(False)
             win.flip() #clear screen (remove stuff from screen)
 
         # if both response options are the same, then accuracy is always correct
-        if digitsToModify == 0 and trialsDfMath.loc[mathTrialI, 'resp'] is not None:
-            trialsDfMath.loc[mathTrialI, 'acc'] = 1
+        if digitsToModify == 0 and trialsDf.loc[i, 'resp'] is not None:
+            trialsDf.loc[i, 'acc'] = 1
+
 
         if sendTTL and not blockType == 'practice':
             port.setData(0) #parallel port: set all pins to low
 
-        trialsDfMath.loc[mathTrialI, 'elapsedTime'] = globalClock.getTime() #store total elapsed time in seconds
-        trialsDfMath.loc[mathTrialI, 'endTime'] = str(time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())) #store current time
+        trialsDf.loc[i, 'elapsedTime'] = globalClock.getTime() #store total elapsed time in seconds
+        trialsDf.loc[i, 'endTime'] = str(time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())) #store current time
         iti = round(random.choice(info['ITIDuration']), 2) #randomly select an ITI duration
-        trialsDfMath.loc[mathTrialI, 'iti'] = iti #store ITI duration
+        trialsDf.loc[i, 'iti'] = iti #store ITI duration
 
         #start inter-trial interval...
         ISI.start(iti)
 
-        ###print "TRIAL OK TRIAL %d OVERALL TRIAL %d" %(i + 1, int(trialsDfMath.loc[mathTrialI, 'overallTrialNum']))
+        ###print "TRIAL OK TRIAL %d OVERALL TRIAL %d" %(i + 1, int(trialsDf.loc[i, 'overallTrialNum']))
 
         ''' DO NOT EDIT BEGIN '''
         #if press 0 (quit script) or 7 (skip block)
-        if trialsDfMath.loc[mathTrialI, 'resp'] == 'backslash':
-            trialsDfMath.loc[mathTrialI, 'responseTTL'] = np.nan
-            trialsDfMath.loc[mathTrialI, 'acc'] = np.nan
-            trialsDfMath.loc[mathTrialI, 'resp'] = None
+        if trialsDf.loc[i, 'resp'] == 'backslash':
+            trialsDf.loc[i, 'responseTTL'] = np.nan
+            trialsDf.loc[i, 'acc'] = np.nan
+            trialsDf.loc[i, 'resp'] = None
             if saveData: #if saveData argument is True, then append current row/trial to csv
-                trialsDfMath[mathTrialI:mathTrialI+1].to_csv(filename, header = True if mathTrialI == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index mathTrialI is 0 AND block is 1 (first block)
+                trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
             #moveFiles(dir = 'Data')
             core.quit() #quit when 'backslash' has been pressed
-        elif trialsDfMath.loc[mathTrialI, 'resp'] == 'bracketright':#if press 7, skip to next block
-            trialsDfMath.loc[mathTrialI, 'responseTTL'] = np.nan
-            trialsDfMath.loc[mathTrialI, 'acc'] = np.nan
-            trialsDfMath.loc[mathTrialI, 'responseTTL'] = np.nan
-            trialsDfMath.loc[mathTrialI, 'resp'] == None
+        elif trialsDf.loc[i, 'resp'] == 'bracketright':#if press 7, skip to next block
+            trialsDf.loc[i, 'responseTTL'] = np.nan
+            trialsDf.loc[i, 'acc'] = np.nan
+            trialsDf.loc[i, 'responseTTL'] = np.nan
+            trialsDf.loc[i, 'resp'] == None
             #naturalText.setAutoDraw(False)
             #healthText.setAutoDraw(False)
             #tasteText.setAutoDraw(False)
             win.flip()
             if saveData: #if saveData argument is True, then append current row/trial to csv
-                trialsDfMath[mathTrialI:mathTrialI+1].to_csv(filename, header = True if mathTrialI == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index mathTrialI is 0 AND block is 1 (first block)
+                trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
             return None
 
-        # global runMentalMathBlockAccuracy
-        info['mentalMathUpdatingCurrentTrialAcc'] = trialsDfMath.loc[mathTrialI, 'acc']
-        # global runMentalMathBlockRt
-        info['mentalMathUpdatingCurrentTrialRt'] = trialsDfMath.loc[mathTrialI, 'rt']
-
-        #print info['mentalMathUpdatingCurrentTrialAcc']
-        #print info['mentalMathUpdatingCurrentTrialRt']
+        global runMentalMathBlockAccuracy
+        runMentalMathBlockAccuracy = trialsDf.loc[i, 'acc']
+        global runMentalMathBlockRt
+        runMentalMathBlockRt = trialsDf.loc[i, 'rt']
 
         if saveData: #if saveData argument is True, then append current row/trial to csv
-            trialsDfMath[mathTrialI:mathTrialI+1].to_csv(filename, header = True if mathTrialI == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index mathTrialI is 0 AND block is 1 (first block)
+            trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
         ''' DO NOT EDIT END '''
 
         ISI.complete() #end inter-trial interval
@@ -561,9 +517,9 @@ def runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, fe
             #stimuli
             accuracyFeedback = visual.TextStim(win = win, units = 'norm', colorSpace = 'rgb', color = [1, 1, 1], font = 'Verdana', text = '', height = 0.07, wrapWidth = 1.4, pos = [0.0, 0.0])
 
-            if trialsDfMath.loc[mathTrialI, 'acc'] == 1: #if nogo trial and keypress
+            if trialsDf.loc[i, 'acc'] == 1: #if nogo trial and keypress
                 accuracyFeedback.setText(random.choice(["Correct"]))
-            elif trialsDfMath.loc[mathTrialI, 'resp'] is None:
+            elif trialsDf.loc[i, 'resp'] is None:
                 accuracyFeedback.setText('Too slow')
             else:
                 accuracyFeedback.setText('Wrong')
@@ -590,8 +546,8 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
     # csv filename to store data
     filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName)
     # create name for logfile
-    # logFilename = "{:03d}-{}-{}".format(int(info['participant']), info['startTime'], taskName)
-    # logfile = logging.LogFile(logFilename + ".log", filemode = 'w', level = logging.EXP) #set logging information (core.quit() is required at the end of experiment to store logging info!!!)
+    logFilename = "{:03d}-{}-{}".format(int(info['participant']), info['startTime'], taskName)
+    logfile = logging.LogFile(logFilename + ".log", filemode = 'w', level = logging.EXP) #set logging information (core.quit() is required at the end of experiment to store logging info!!!)
     #logging.console.setLevel(logging.DEBUG) #set COSNSOLE logging level
 
     mouse.setVisible(0) #make mouse invisible
@@ -603,42 +559,11 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
     except: #if fail to read csv, then it's trial 1
         writeHeader = True
 
-    '''GENERATE TRIALS FOR EFFORT/REWARD CHOICE TASK'''
-    rewardEffortCombi = [(r, e) for r in reward for e in effort] # all combinations
-    rewardEffortCombi = pd.DataFrame(rewardEffortCombi)
-    rewardEffortCombi.columns = ['reward', 'effort']
-    rewardEffortCombi['beneficiary'] = 'self'
+    trialsDf = pd.DataFrame(index=np.arange(reps * len([(r, e) for r in reward for e in effort]))) # create empty dataframe to store trial info
 
-    rewardEffortCombi2 = [(r, e) for r in reward for e in effort] # all combinations
-    rewardEffortCombi2 = pd.DataFrame(rewardEffortCombi2)
-    rewardEffortCombi2.columns = ['reward', 'effort']
-    rewardEffortCombi2['beneficiary'] = 'charity'
-
-    rewardEffortCombi3 = [(r, e) for r in reward for e in effort] # all combinations
-    rewardEffortCombi3 = pd.DataFrame(rewardEffortCombi3)
-    rewardEffortCombi3.columns = ['reward', 'effort']
-    rewardEffortCombi3['beneficiary'] = 'otherperson'
-
-    trialsInBlock = pd.concat([rewardEffortCombi, rewardEffortCombi2, rewardEffortCombi3] * reps, ignore_index=True)
-
-    if blockType == 'self':
-        trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'self']
-    elif blockType == 'charity':
-        trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'charity']
-    elif blockType == 'otherperson':
-        trialsInBlock = trialsInBlock[trialsInBlock.beneficiary == 'otherperson']
-    elif blockType == 'mixed':
-        trialsInBlock = trialsInBlock
-
-    trialsInBlock = trialsInBlock.reindex(np.random.permutation(trialsInBlock.index)).reset_index(drop=True) # shuffle/randomize order
-
-    trialsInBlock['rewardJittered'] = trialsInBlock.reward
-
-    if jitter is not None:
-        trialsInBlock['rewardJittered'] = trialsInBlock.reward + np.around(np.random.normal(scale=0.1, size=trialsInBlock.shape[0]) / 0.05) * 0.05
-
-
-    trialsDf = pd.DataFrame(index=np.arange(trialsInBlock.shape[0])) # create empty dataframe to store trial info
+    #if this is a practice block
+    if blockType == 'practice':
+        trialsDf = trialsDf[0:practiceTrials] # practice trials to present
 
     #store info in dataframe
     trialsDf['participant'] = int(info['participant'])
@@ -676,12 +601,37 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
     trialsDf['accUpdating'] = np.nan
     trialsDf['rtUpdating'] = np.nan
 
+    '''GENERATE TRIALS FOR EFFORT/REWARD CHOICE TASK'''
+    if blockType == 'self':
+        rewardEffortCombi = [(r, e) for r in reward for e in effort] # all combinations
+        rewardEffortCombi = pd.DataFrame(rewardEffortCombi)
+        rewardEffortCombi.columns = ['reward', 'effort']
+        rewardEffortCombi['beneficiary'] = 'self'
+        trialsInBlock = pd.concat([rewardEffortCombi], ignore_index=True)
+    elif blockType == 'charity':
+        rewardEffortCombi2 = pd.DataFrame(rewardEffortCombi2)
+        rewardEffortCombi2.columns = ['reward', 'effort']
+        rewardEffortCombi2['beneficiary'] = 'charity'
+        trialsInBlock = pd.concat([rewardEffortCombi2], ignore_index=True)
+    else:
+        rewardEffortCombi = [(r, e) for r in reward for e in effort] # all combinations
+        rewardEffortCombi = pd.DataFrame(rewardEffortCombi)
+        rewardEffortCombi.columns = ['reward', 'effort']
+        rewardEffortCombi['beneficiary'] = 'self'
+
+        rewardEffortCombi2 = [(r, e) for r in reward for e in effort] # all combinations
+        rewardEffortCombi2 = pd.DataFrame(rewardEffortCombi2)
+        rewardEffortCombi2.columns = ['reward', 'effort']
+        rewardEffortCombi2['beneficiary'] = 'charity'
+
+        trialsInBlock = pd.concat([rewardEffortCombi, rewardEffortCombi2], ignore_index=True)
+
+    trialsInBlock = trialsInBlock.reindex(np.random.permutation(trialsInBlock.index)).reset_index(drop=True) # shuffle
+    trialsInBlock['rewardJittered'] = trialsInBlock.reward
+    if jitter is not None:
+        trialsInBlock['rewardJittered'] = trialsInBlock.reward + np.around(np.random.normal(scale=0.1, size=trialsInBlock.shape[0]) / 0.05) * 0.05
+
     trialsDf = pd.concat([trialsDf, trialsInBlock], axis=1)
-
-    # if this is a practice block
-    if blockType == 'practice':
-        trialsDf = trialsDf[0:practiceTrials] # practice trials to present
-
     # print trialsDf
 
     # Assign blockNumber based on existing csv file. Read the csv file and find the largest block number and add 1 to it to reflect this block's number.
@@ -697,15 +647,15 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
     # create stimuli that are constant for entire block
     # draw stimuli required for this block
     # [1.0,-1,-1] is red; #[1, 1, 1] is white
-    fixation = visual.TextStim(win=win, units='norm', height=0.08, ori=0, name='target', text='+', font='Courier New Bold', colorSpace='rgb', color=[-.3, -.3, -.3], opacity=1)
+    fixation = visual.TextStim(win=win, units='norm', height=0.08, ori=0, name='target', text='+', font='Courier New Bold', colorSpace='rgb', color=[1, -1, -1], opacity=1)
 
-    constantOptionEffort = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = 'add 0', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.2, 0.05))
+    constantOptionEffort = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = 'add 0', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.12, 0.05))
 
-    constantOptionReward = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = '1 credit', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.2, -0.05))
+    constantOptionReward = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = '1 credit', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.12, -0.05))
 
-    varyingOptionEffort = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = 'XXX', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0.2, 0.05))
+    varyingOptionEffort = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = 'XXX', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0.12, 0.05))
 
-    varyingOptionReward = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = 'XXX', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0.2, -0.05))
+    varyingOptionReward = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = 'XXX', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0.12, -0.05))
 
     beneficiaryText = visual.TextStim(win = win, units = 'norm', height = 0.1, ori = 0, name = 'target', text = 'XXX', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(0, 0.2))
 
@@ -780,10 +730,8 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
 
         if thisTrial['beneficiary'] == 'charity':
             beneficiaryText.setText(charityChosen)
-        elif thisTrial['beneficiary'] == 'self':
+        else:
             beneficiaryText.setText('self')
-        elif thisTrial['beneficiary'] == 'otherperson':
-            beneficiaryText.setText('another student')
 
         beneficiaryText.setAutoDraw(True)
 
@@ -805,24 +753,12 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
             except:
                 pass
 
-        try:
-            targetFramesCurrentTrial = int(trialsDf.loc[i, 'targetFrames'])
-        except:
-            try:
-                targetFramesCurrentTrial = int(rtMaxFrames)
-            except:
-                try:
-                    targetFramesCurrentTrial = int(info['targetFrames'])
-                except:
-                    targetFramesCurrentTrial = 300
-
         win.callOnFlip(respClock.reset) # reset response clock on next flip
         win.callOnFlip(trialClock.reset) # reset trial clock on next flip
 
         event.clearEvents() # clear events
 
-
-        for frameN in range(targetFramesCurrentTrial):
+        for frameN in range(int(trialsDf.loc[i, 'targetFrames'])):
             if frameN == 0: #on first frame/flip/refresh
                 if sendTTL and not blockType == 'practice':
                     win.callOnFlip(port.setData, int(thisTrial['TTLStim']))
@@ -831,18 +767,17 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
                 ##print "First frame in Block %d Trial %d OverallTrialNum %d" %(blockNumber, i + 1, trialsDf.loc[i, 'overallTrialNum'])
                 ##print "Stimulus TTL: %d" %(int(thisTrial['TTLStim']))
             else:
-                keysCollected = event.getKeys(keyList = ['f', 'j', 'backslash', 'bracketright'])
-                if len(keysCollected) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
-
+                keys = event.getKeys(keyList = ['f', 'j', 'backslash', 'bracketright'])
+                if len(keys) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
                     trialsDf.loc[i, 'rt'] = respClock.getTime() #store RT
-                    trialsDf.loc[i, 'resp'] = keysCollected[0] #store response in pd df
+                    trialsDf.loc[i, 'resp'] = keys[0] #store response in pd df
 
-                    if keysCollected[0] == 'f':
+                    if keys[0] == 'f':
                         if sendTTL and not blockType == 'practice':
                             port.setData(15) # correct response
                         trialsDf.loc[i, 'responseTTL'] = 15
                         trialsDf.loc[i, 'choiceText'] = 'baseline'
-                    elif keysCollected[0] == 'j':
+                    elif keys[0] == 'j':
                         if sendTTL and not blockType == 'practice':
                             port.setData(16) # correct response
                         trialsDf.loc[i, 'responseTTL'] = 16
@@ -885,7 +820,7 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
         #start inter-trial interval...
         ISI.start(iti)
 
-        ### print "TRIAL OK TRIAL %d OVERALL TRIAL %d" %(i + 1, int(trialsDf.loc[i, 'overallTrialNum']))
+        ###print "TRIAL OK TRIAL %d OVERALL TRIAL %d" %(i + 1, int(trialsDf.loc[i, 'overallTrialNum']))
 
         ''' DO NOT EDIT BEGIN '''
         #if press 0 (quit script) or 7 (skip block)
@@ -913,7 +848,7 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
 
         ISI.complete() #end inter-trial interval
 
-        # feedback for trial
+        #feedback for trial
         if feedback:
             # initialize stimuli
             feedbackText1 = visual.TextStim(win = win, units = 'norm', colorSpace = 'rgb', color = [1, 1, 1], font = 'Verdana', text = '', height = 0.07, wrapWidth = 1.4, pos = [0.0, 0.0])
@@ -926,7 +861,7 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
                 feedbackText1.setText('Respond faster')
             else:
                 pass
-            for frameN in range(60):
+            for frameN in range(info['feedbackTime']):
                 feedbackText1.draw()
                 win.flip()
 
@@ -938,56 +873,42 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
         if trialsDf.loc[i, 'resp'] is not None:
             # run mental math updating trial
             if trialsDf.loc[i, 'choiceText'] == 'baseline':
-                runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, feedback=True, saveData=True, practiceTrials=0, digits=3, digitChange=0, digitsToModify=0, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+                runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, feedback=True, saveData=True, practiceTrials=0, digits=3, digitChange=0, digitsToModify=0, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
             elif trialsDf.loc[i, 'choiceText'] == 'effortful':
-                runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, feedback=True, saveData=True, practiceTrials=0, digits=3, digitChange=trialsDf.loc[i, 'effort'], digitsToModify=1, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+                runMentalMathBlock(taskName='mentalMathUpdating', blockType='', trials=1, feedback=True, saveData=True, practiceTrials=0, digits=3, digitChange=trialsDf.loc[i, 'effort'], digitsToModify=2, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
             else:
                 pass
 
-        # global runMentalMathBlockAccuracy
-        trialsDf.loc[i, 'accUpdating'] = info['mentalMathUpdatingCurrentTrialAcc']
-        #global runMentalMathBlockRt
-        trialsDf.loc[i, 'rtUpdating'] = info['mentalMathUpdatingCurrentTrialRt']
-
-        #print info['mentalMathUpdatingCurrentTrialAcc']
-        #print trialsDf.loc[i, 'accUpdating']
-        #print info['mentalMathUpdatingCurrentTrialRt']
-        #print trialsDf.loc[i, 'rtUpdating']
-
+        global runMentalMathBlockAccuracy
+        trialsDf.loc[i, 'accUpdating'] = runMentalMathBlockAccuracy
+        global runMentalMathBlockRt
+        trialsDf.loc[i, 'rtUpdating'] = runMentalMathBlockRt
 
         if saveData: #if saveData argument is True, then append current row/trial to csv
             trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
 
         #feedback for trial
-        if feedback and trialsDf.loc[i, 'resp'] is not None:
+        if feedback:
             # initialize stimuli
             feedbackText1 = visual.TextStim(win = win, units = 'norm', colorSpace = 'rgb', color = [1, 1, 1], font = 'Verdana', text = '', height = 0.07, wrapWidth = 1.4, pos = [0.0, 0.0])
 
             if trialsDf.loc[i, 'accUpdating'] == 1:
                 if trialsDf.loc[i, 'choiceText'] == 'effortful':
-                    feedbackText1.setText('correct, {} credits'.format(thisTrial['rewardJittered']))
+                    feedbackText1.setText('{} credits'.format(thisTrial['rewardJittered']))
                 else:
-                    feedbackText1.setText('correct, 1 credit')
+                    feedbackText1.setText('1 credit')
             else:
-                if trialsDf.loc[i, 'choiceText'] == 'effortful':
-                    feedbackText1.setText('wrong, {} credits'.format(thisTrial['rewardJittered']))
-                else:
-                    feedbackText1.setText('wrong, 1 credit')
+                feedbackText1.setText('no credits earned')
 
             for frameN in range(48):
                 feedbackText1.draw()
                 win.flip()
 
-        info['mentalMathUpdatingCurrentTrialAcc'] = 0
-        info['mentalMathUpdatingCurrentTrialRt'] = np.nan
+        # pause
+        for frameN in range(info['blockEndPause'] * 2):
+            win.flip() #wait at the end of the block
 
     # end of block pause
-    constantOptionEffort.setAutoDraw(False)
-    constantOptionReward.setAutoDraw(False)
-    varyingOptionEffort.setAutoDraw(False)
-    varyingOptionReward.setAutoDraw(False)
-    beneficiaryText.setAutoDraw(False)
-    practiceInstructText.setAutoDraw(False)
     for frameN in range(info['blockEndPause']):
         win.flip() #wait at the end of the block
 
@@ -1224,7 +1145,7 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
     for frameN in range(info['blockEndPause']):
         win.flip() #wait at the end of the block
 
-def showQuestionnaire(csvFile, scaleMin, scaleMax, scaleDescription='Click scale to respond.', outputName='Questionnaires', scaleLeftRightAnchorText=['strongly disagree', 'strongly agree']):
+def showQuestionnaire(csvFile, scaleMin, scaleMax, scaleDescription, outputName='Questionnaires'):
     '''Show questionnaire from csv file (csvFile).
     Saves reaction time and rating in long form. Different questionnaires will be saved as one csv file.
     csvFile: name of csv file with questionnaire items (csv file must have two columns with variable names qNo and question); csv file MUST BE IN STIMULI DIRECTORY
@@ -1260,8 +1181,7 @@ def showQuestionnaire(csvFile, scaleMin, scaleMax, scaleDescription='Click scale
     questionsDf['rt'] = '' #new variable to store response RT
 
     # create rating scale for this questionnair
-    # tickMarks = range(scaleMin, scaleMax + 1)
-    scale = visual.RatingScale(win, low = scaleMin, high = scaleMax, mouseOnly = True, singleClick = True, stretch = 2, marker = 'slider', showAccept = False, pos = (0, -0.5), showValue = True, textSize = 0.7, textFont = 'Verdana', markerColor = 'red', scale = scaleDescription, labels=[str(scaleMin) + ": " + scaleLeftRightAnchorText[0], str(scaleMax) + ": " + scaleLeftRightAnchorText[1]], tickMarks=[scaleMin, scaleMax])
+    scale = visual.RatingScale(win, low = scaleMin, high = scaleMax, tickMarks = range(scaleMin, scaleMax + 1), mouseOnly = True, singleClick = True, stretch = 2, marker = 'slider', showAccept = False, pos = (0, -0.5), showValue = True, textSize = 0.7, textFont = 'Verdana', markerColor = 'red', scale = scaleDescription)
 
     scale.setDescription(scaleDescription) # set description of rating scale
 
@@ -1311,42 +1231,25 @@ def showQuestionnaire(csvFile, scaleMin, scaleMax, scaleDescription='Click scale
 
 def showAllQuestionnaires():
 
-    # #need for cognition
-    # showInstructions(text = ['Click on the scale to indicate the extent to which you agree.'])
-    # showQuestionnaire(csvFile = 'NeedForCognition.csv', scaleMin = -4, scaleMax = 4, outputName='Questionnaires', scaleLeftRightAnchorText=['very strong disagreement', 'very strong agreement'])
-
-    #PoliticalOrientation
-    showQuestionnaire(csvFile = 'PoliticalOrientation.csv', scaleMin = 1, scaleMax = 7, outputName='Questionnaires', scaleLeftRightAnchorText=['very liberal', 'very conservative'])
-
-    # ApathyMotivationIndex
-    showInstructions(text = ["Indicate how true each statement is based on the past two weeks of your life."])
-    showQuestionnaire(csvFile = 'ApathyMotivationIndex.csv', scaleMin = 0, scaleMax = 4, outputName='Questionnaires', scaleLeftRightAnchorText=["completely true", "completely untrue"])
-
     #BFAS
     showInstructions(text = ["Next you will read several characteristics that may or may not describe you. Select the option that best indicates how much you agree or disagree. Be as honest as you can and rely on your initial feeling. Do not think too much about each item."])
-    showQuestionnaire(csvFile = 'BFAS.csv', scaleMin = 1, scaleMax = 5, outputName='Questionnaires', scaleLeftRightAnchorText=['disagree strongly', 'agree strongly'])
+    showQuestionnaire(csvFile = 'BFAS.csv', scaleMin = 1, scaleMax = 5, scaleDescription = '1: disagree strongly, 5: agree strongly')
 
-    # Prosocialness scale
-    showInstructions(text = ["For the next few statements, indicate how well it describes you."])
-    showQuestionnaire(csvFile = 'ProsocialScale.csv', scaleMin = 1, scaleMax = 5, outputName='Questionnaires', scaleLeftRightAnchorText=['occasionally true', 'almost always true'])
-    showQuestionnaire(csvFile = 'DonateFrequency.csv', scaleMin = 1, scaleMax = 100, outputName='Questionnaires', scaleLeftRightAnchorText=['never in my life', 'regularly'])
+    #ApathyMotivationIndex
+    showInstructions(text = ["Indicate how true each statement is based on the past two weeks of your life."])
+    showQuestionnaire(csvFile = 'ApathyMotivationIndex.csv', scaleMin = 0, scaleMax = 4, scaleDescription = "0: completely true, 4: completely untrue")
 
     #Dispositional awe
     showInstructions(text = ["The following statements inquire about your thoughts and feelings in a variety of situations. For each item, indicate how well it describes you."])
-    showQuestionnaire(csvFile = 'DispositionalPositiveEmotionsScaleAwe.csv', scaleMin = 1, scaleMax = 7, outputName='Questionnaires', scaleLeftRightAnchorText=['strongly disagree', 'strongly agree'])
+    showQuestionnaire(csvFile = 'DispositionalPositiveEmotionsScaleAwe.csv', scaleMin = 1, scaleMax = 7, scaleDescription = '1: strongly disagree, 7: strongly agree')
 
-    # Empathy index
+    #Empathy index
     showInstructions(text = ["The following statements inquire about your thoughts and feelings in a variety of situations. For each item, indicate how well it describes you."])
-    showQuestionnaire(csvFile = 'EmpathyIndex.csv', scaleMin = 1, scaleMax = 5, outputName='Questionnaires', scaleLeftRightAnchorText=["doesn't describe me well", "describes me very well"])
+    showQuestionnaire(csvFile = 'EmpathyIndex.csv', scaleMin = 1, scaleMax = 5, scaleDescription = "1: doesn't describe me well , 5: describes me very well")
 
-    # political orientation
-    # showInstructions(text = ["For the next few items, indicate how you feel about each one. Click scale to respond."])
-    # # SECS political orientation
-    # showQuestionnaire(csvFile = 'SECS.csv', scaleMin = 0, scaleMax = 100, outputName='Questionnaires', scaleLeftRightAnchorText=['very negative', 'very positive'])
-
-    # religious
-    showInstructions(text = ["For the next few items, indicate how you much you agree with each. Click scale to respond."])
-    showQuestionnaire(csvFile = 'ReligiousZeal.csv', scaleMin = 1, scaleMax = 7, outputName='Questionnaires', scaleLeftRightAnchorText=['strongly disagree', 'strongly agree'])
+    #PoliticalOrientation
+    showInstructions(text = ["Click scale to respond."])
+    showQuestionnaire(csvFile = 'PoliticalOrientation.csv', scaleMin = 1, scaleMax = 7, scaleDescription = "1: very liberal, 3: moderate/middle-of-the-road, 7: very conservative")
 
 def getDemographics(outputCSV='demographics', measures={'gender': 4, 'ethnicity': 9, 'handedness': 3, 'ses': 9}, saveData=True):
 
@@ -1446,104 +1349,6 @@ def getDemographics(outputCSV='demographics', measures={'gender': 4, 'ethnicity'
     for frameN in range(30):
         win.flip() # wait at the end of the block
 
-def showCredit():
-
-    for frameN in range(30):
-        win.flip()
-
-    ''' notify credits/money earned '''
-
-    showInstructions(text = ["Now the computer will determine how many credits and how much money you've earned..."], timeBeforeShowingSpace=3)
-
-    try:
-        creditCsv = "{:03d}-{}-effortRewardChoice.csv".format(int(info['participant']), info['startTime'])
-        creditDf = pd.read_csv(creditCsv)
-        creditDf = creditDf.dropna(subset=['accUpdating', 'reward'])
-
-        overallAcc = creditDf.accUpdating.mean() * 100
-        if overallAcc >= 90:
-            toPay = 'yes'
-        else:
-            toPay = 'no'
-
-        creditSelfBaseline = creditDf.loc[(creditDf.beneficiary == 'self') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'baseline'), ].shape[0]
-        creditSelfEffortful = int(creditDf.loc[(creditDf.beneficiary == 'self') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'effortful'), 'reward'].sum())
-        creditSelf = creditSelfBaseline + creditSelfEffortful
-
-        creditCharityBaseline = creditDf.loc[(creditDf.beneficiary == 'charity') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'baseline'), ].shape[0]
-        creditCharityEffortful = int(creditDf.loc[(creditDf.beneficiary == 'charity') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'effortful'), 'reward'].sum())
-        creditCharity = creditCharityBaseline + creditCharityEffortful
-
-        creditAnotherBaseline = creditDf.loc[(creditDf.beneficiary == 'charity') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'baseline'), ].shape[0]
-        creditAnotherEffortful = int(creditDf.loc[(creditDf.beneficiary == 'charity') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'effortful'), 'reward'].sum())
-        creditAnother = creditAnotherBaseline + creditAnotherEffortful
-
-        moneySelf = 0.01 * creditSelf
-        moneyCharity = 0.01 * creditCharity
-        moneyAnother = 0.01 * creditAnother
-
-        outputCsv = pd.DataFrame(index=range(0, 1))
-        outputCsv['participant'] = int(info['participant'])
-        outputCsv['email'] = str(info['email'])
-        outputCsv['overallAccuracy'] = overallAcc
-        outputCsv['toPay'] = toPay
-        outputCsv['moneySelf'] = moneySelf
-        outputCsv['moneyCharity'] = moneyCharity
-        outputCsv['moneyAnother'] = moneyAnother
-        outputCsv['charityChosen'] = charityChosen
-        outputCsv['creditSelf'] = creditSelf
-        outputCsv['creditCharity'] = creditCharity
-        outputCsv['creditAnother'] = creditAnother
-
-        outputCsv.to_csv("{:03d}-{}-REWARDINFO.csv".format(int(info['participant']), info['startTime']), index=False)
-
-        if overallAcc >= 90:
-            showInstructions(text = ["Your overall accuracy was {:.0f}%. You've earned {} credits for yourself, {} credits for charity, and {} credits for another student.".format(overallAcc, creditSelf, creditCharity, creditAnother),
-            "These credits convert to ${:.2f} for yourself, and ${:.2f} donated to your charity. We will email you your reward in the form of an Amazon voucher, and will help you donate to {}. We will also email an Amazon voucher worth ${:.2f} to another randomly selected student who has participated in a different experiment.".format(moneySelf, moneyCharity, charityChosen, moneyAnother)])
-        else:
-            showInstructions(text = ["Your overall accuracy was {:.0f}%. Although you've earned {} credits for yourself, {} credits for charity, and {} credits for another student, these credits won't be converted to money and neither you nor your charity will be paid because you need to be at least 90% accurate.".format(overallAcc, creditSelf, creditCharity, creditAnother)])
-
-    except:
-
-        outputCsv = pd.DataFrame(index=range(0, 1))
-        outputCsv['participant'] = int(info['participant'])
-        outputCsv['email'] = str(info['email'])
-        outputCsv['moneySelf'] = 3.50
-        outputCsv['moneyCharity'] = 2.80
-        outputCsv['charityChosen'] = charityChosen
-        outputCsv['creditSelf'] = np.nan
-        outputCsv['creditCharity'] = np.nan
-
-        outputCsv.to_csv("{:03d}-{}-REWARDINFO.csv".format(int(info['participant']), info['startTime']), index=False)
-
-        showInstructions(text = ["Your overall accuracy was 91%. The credits you've earned have been converted to $4.20 for yourself, $3.90 donated to your charity, and $3.10 to another student. We will email you your reward in the form of an Amazon voucher, and will help you donate to {}. We will also email an Amazon voucher to another randomly selected student who has participated in a different experiment.".format(charityChosen)])
-
-    for frameN in range(30):
-        win.flip()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1566,8 +1371,8 @@ def showCredit():
 #######################################################################
 #######################################################################
 #######################################################################
-
 ''' START EXPERIMENT HERE '''
+
 if sendTTL:
    port.setData(0) # make sure all pins are low before experiment
 
@@ -1575,114 +1380,96 @@ showInstructions(text = [
 " ", # black screen at the beginning
 "Welcome to today's experiment! Before we begin, please answer a few questions about yourself."])
 
-getDemographics() # get demographics (gender, ses, ethnicity)
+getDemographics() # get demographics (gender, ses, ethnicity, handedness)
+
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2, 4, 6, 9, 12], effort=[1, 2, 3, 5, 7])
 
 ''' practice '''
 showInstructions(text =
-["We are studying how people make decisions related to cognitive effort. You'll have many opportunities to earn money during the experiment. All decisions in this experiment are for real (not hypothetical) and will be implemented at the end of the experiment.",
+["We are studying how people make decisions related to cognitive effort. You will also have many opportunities to earn money during the experiment.",
 "If you have any questions during the experiment, raise/wave your hands and the research assistant will help you.",
 "The cognitive task you're going to do requires you to solve math problems (adding numbers) and has different levels of difficulty.",
 "You'll see three-digit sequences, with each digit presented one at a time on the screen. You have to add a certain number (e.g., add 3) to each digit, one at a time, remember the sequence of digits, and choose the correct answer later on.",
-"So, if you see 5, 2, 3 (presented one at a time) and you've been told to add 3, you'll add 3 to each number separately, and will have to choose between two responses shown on the left and right of the screen: 856 and 846. 856 is the correct response in this example.",
+"So, if you see 5, 2, 3 (presented on at a time) and you've been told to add 3, you'll add 3 to each number separately, and will have to choose between two responses shown on the left and right of the screen: 856 and 846. 856 is the correct response in this example.",
 "Place your left and right index fingers on the F and J keys, and press the F key to choose the left option, and the J key for the right option.",
 "Whenever the sum of two digits is greater than 10, you'll report only the ones digit (the rightmost digit). For example, if the problem is 9 + 5, the summed digit will be 4 (not 14).",
 "A few more examples: 7 + 8 is 5; 4 + 6 is 0; 9 + 2 is 1.",
 "If anything's unclear, please ask the researcher assistant now. If not, we'll practice a bit now!",
 "You have 2 seconds to indicate your answer (using the F and J keys). If no choice is made, it'll be considered wrong and the task will proceed."])
 
-
-practiceReps = 2
 showInstructions(text = ["Let's try adding 1 to each digit!"])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=practiceReps, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=1, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
-showInstructions(text = ["That was add 1. If anything's unclear, please ask the research assistant now."])
+runMentalMathBlock(taskName='mentalMathUpdating', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=1, digitsToModify=2, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["That was add 1. If anything's unclear, please ask the research assistant now!"])
 
-showInstructions(text = ["Now let's try adding 3 to each digit."])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=practiceReps, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=3, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["Now let's try adding 2 to each digit."])
+runMentalMathBlock(taskName='mentalMathUpdating', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=2, digitsToModify=2, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["That was add 2."])
+
+showInstructions(text = ["Now let's do add 3."])
+runMentalMathBlock(taskName='mentalMathUpdating', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=3, digitsToModify=2, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
 showInstructions(text = ["That was add 3."])
 
-showInstructions(text = ["Now let's do add 5."])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=practiceReps, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=5, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+showInstructions(text = ["Let's try add 5 now!"])
+runMentalMathBlock(taskName='mentalMathUpdating', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=5, digitsToModify=2, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
 showInstructions(text = ["That was add 5."])
 
-showInstructions(text = ["Let's try add 6 now!"])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=practiceReps, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=6, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
-showInstructions(text = ["That was add 6."])
-
 showInstructions(text = ["Let's try add 7 now!"])
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=practiceReps, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=7, digitsToModify=1, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+runMentalMathBlock(taskName='mentalMathUpdating', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=3, digits=3, digitChange=7, digitsToModify=2, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
 showInstructions(text = ["That was add 7."])
 
 showInstructions(text = ["Finally, let's try add 0. When adding 0, all you have to do is remember the three digits. In fact, the two response options will be identical and either will be correct. So as long as you make a response in under 2 seconds, you'll be correct!"])
-
-runMentalMathBlock(taskName='mentalMathUpdatingPractice', blockType='practice', trials=1, feedback=True, saveData=True, practiceTrials=1, digits=3, digitChange=0, digitsToModify=0, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
+runMentalMathBlock(taskName='mentalMathUpdating', blockType='practice', trials=3, feedback=True, saveData=True, practiceTrials=2, digits=3, digitChange=0, digitsToModify=0, titrate=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None)
 showInstructions(text = ["That was add 0."])
 
 ''' effort questions '''
 showInstructions(text = ["Now you'll answer a few questions about the math task."])
 
-effortQuestions = ['How much effort did add 0 require?', 'How much effort did add 1 require?', 'How much effort did add 3 require?', 'How much effort did add 5 require?', 'How much effort did add 6 require?', 'How much effort did add 7 require?']
+effortQuestions = ['How much effort did add 0 require?', 'How much effort did add 1 require?', 'How much effort did add 2 require?', 'How much effort did add 3 require?', 'How much effort did add 5 require?', 'How much effort did add 7 require?']
 random.shuffle(effortQuestions)
 
 presentQuestions(questionName='effortFrustrateReport', questionList=effortQuestions, blockType='pre', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['none at all', 'very much'])
 
 ''' frustrate questions '''
-frustrateQuestions = ['How frustrating was add 0?', 'How frustrating was add 1?', 'How frustrating was add 3?', 'How frustrating was add 5?', 'How frustrating was add 6?', 'How frustrating was add 7?']
+frustrateQuestions = ['How frustrating was add 0?', 'How frustrating was add 1?', 'How frustrating was add 2?', 'How frustrating was add 3?', 'How frustrating was add 5?', 'How frustrating was add 7?']
 random.shuffle(frustrateQuestions)
 
 presentQuestions(questionName='effortFrustrateReport', questionList=frustrateQuestions, blockType='pre', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['not at all', 'very much'])
 
+
 ''' practice choice task '''
 
 showInstructions(text = [
-"You'll be doing many of these addition tasks later on, and the task difficulty depends on your choices during a decision making task.",
-"In this decision task, you'll have to choose between two options: doing add 0 or add 1, 3, 5, 6, or 7). Each option will have a specific number of credits associated with it. If you perform your chosen task correctly at least 90% of the time, you'll get those credits, which will be converted to money (Amazon voucher to be emailed to you).",
-"Add 0 will ALWAYS be one of the available options, and you will ALWAYS receive 1 credit for choosing to do add 0 (ADD 0 1 CREDIT)",
-"The other option will vary in terms of difficulty (e.g., add 3, 5) and credits (2 to 12 credits).",
-"For example, you might see these two options on the screen: add 0 for 1 credit vs add 3 for 5 credits. The add 0 for 1 credit option means if you choose it and perform accurately on the add 0 task, you'll get 1 credit. And if you choose the add 3 for 5 credits option, you'll add 3 to each digit to get 5 credits.",
+"You'll be doing many of these addition tasks later on, and the task difficulty (add 0, 1, 2, 3, 5, or 7) depends on your choices during a decision making task.",
+"In this decision task, you'll have to choose between two options: doing add 0 or add 1, 2, 3, 5, or 7). Each option will have a specific number of credits associated with it. If you perform your chosen task correctly, you'll get those credits, which will be converted to money (Amazon voucher to be emailed to you).",
+"Add 0 will ALWAYS be one of the available options, and you will ALWAYS receive 1 credit for choosing to do add 0. The other option will vary in terms of difficulty (add 1, 2, 3, 5, or 7) and credits (2 to 12 credits).",
+"For example, you might see these two options on the screen: add 0 for 1 credit vs add 3 for 5 credits. The add 0 for 1 credit option means if you choose it and perform accurately on the add 0 task, you'll get 1 credit. And if you choose the add 3 option for 5 credits option, you'll get 5 credits if you perform the add 3 task accurately.",
 "Here is one more example: add 0 for 1 credit vs add 7 for 2 credits",
 "If you don't have any questions, we'll practice a bit now.",
 "If you see the word 'self' at the top, it means the credits you earn will be given to you.",
-"Press F to select the left option, and J for the right option.",
-"Remember, one of the options will always be ADD 0 FOR 1 CREDIT, and you'll DEFINITELY RECEIVE that 1 credit if you choose it.",
 "Here we go! You have up to 5 seconds to choose."
 ])
 
 ''' self practice'''
-runEffortRewardChoiceBlock(taskName='effortRewardChoicePractice', blockType='self', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2, 4], effort=[1, 3])
-
-
-showInstructions(text = [
-"The 'self' you saw at the top just now means the credits you earn will go to you. But sometimes, the credits you earn will instead go to another UTSC student who has already participated in a DIFFERENT EXPERIMENT in this laboratory." 
-])
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='self', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2], effort=[1, 3])
 
 showInstructions(text = [
-"Whenever you see 'another student', any credits/money you earn will be given to another student, and you'll be 'helping' this other student, even though you'll never meet this student in person and you'll never know who benefitted from your choices and performance in this experiment."
-])
-
-showInstructions(text = [
-"Other times, the credits you earn will instead go to a charity. For example you choose add 7 for 3 credits for a charity, you are saying you will be donating your 3 credits (converted to monetary amounts at the end) to a charity if you perform the add 7 task correctly.",
-"These choices and outcomes are not hypothetical and will actually be implemented at the end of the study, so you can influence how much a charity or another UTSC student benefits from your choices and performance.",
-"Now, you can choose which (of 5) charities you can donate to. If you have a specific charity you'd like to donate to, let the research assistant know. "
+"The 'self' you saw at the top just now means the credits you earn will go to you. But sometimes, the credits you earn will instead go to a charity. In this case, for example you choose add 7 for 3 credits for a charity, you are saying you will be donating your 3 credits (converted to monetary amounts at the end) to a charity if you got perform the add 7 task correctly.",
+"So, in this choice task, you can earn credits/money for yourself or for a charity, so decide carefully and try to do the addition task well!",
+"Now, you can choose which (of 5) charity you want to donate to. If you have a specific charity you'd like to donate to, let the research assistant know. "
 ])
 
 # pick charity here
-presentQuestions(questionName='charityChoice', questionList=["Which charity do you want to donate to? (1) World Vision Canada; (2) Canadian Cancer Society; (3) SickKids Foundation; (4) Salvation Army; (5) Wildlife Preservation Canada; (6) Other (please ask for the researcher assistant if you want to select this option)"], blockType='charityChoice', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,5], scaleAnchorText=[' ', ' '], showAnchors=False)
-
+presentQuestions(questionName='charityChoice', questionList=["Which charity do you want to donate to? (1) World Vision Canada; (2) Canadian Cancer Society; (3) SickKids Foundation; (4) Salvation Army; (5) Wildlife Preservation Canada; (6) Other (please ask for the researcher assistance if you want to select this option)"], blockType='charityChoice', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,5], scaleAnchorText=[' ', ' '], showAnchors=False)
 
 showInstructions(text = [
-"Let's practice choosing and performing the task for yourself, another student, or {}.".format(charityChosen),
-"Remember, one option will always remain the same (add 0 for 1 credit), whereas the other option varies."
+"Let's practice choosing and performing the task for both yourself and {}.".format(charityChosen),
+"Remember, one option always remain the same (add 0 for 1 credit), whereas the other option varies."
 ])
 
-''' self/charity/otherperson practice'''
-runEffortRewardChoiceBlock(taskName='effortRewardChoicePractice', blockType='otherperson', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=60, experimentMaxTimeSeconds=None, reward=[2], effort=[2])
+''' self/charity practice'''
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='charity', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=60, experimentMaxTimeSeconds=None, reward=[2], effort=[3])
 
-runEffortRewardChoiceBlock(taskName='effortRewardChoicePractice', blockType='charity', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=60, experimentMaxTimeSeconds=None, reward=[2], effort=[2])
-
-runEffortRewardChoiceBlock(taskName='effortRewardChoicePractice', blockType='otherperson', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=60, experimentMaxTimeSeconds=None, reward=[2], effort=[3])
-
-runEffortRewardChoiceBlock(taskName='effortRewardChoicePractice', blockType='charity', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=60, experimentMaxTimeSeconds=None, reward=[2], effort=[3])
-
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='self', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=60, experimentMaxTimeSeconds=None, reward=[10], effort=[4])
 
 showInstructions(text = ["That's the end of practice. Let the research assistant know if you have any questions."])
 
@@ -1691,48 +1478,76 @@ showInstructions(text = [
 "You'll now do the actual choice and math task now.",
 "Place your left and right index fingers on the F and J keys, and use the F and J keys to choose the left and right options respectively.",
 "You have up to 5 seconds to make each choice, and 2 seconds to indicate your response when doing the addition task.",
-"Remember, you're making REAL choices from now on. Your choices and decisions are not hypothetical. We will convert the credits you earn during the task into monetary amounts and will pay you, another student, and {} accordingly.".format(charityChosen),
-"To receive the credits/money at the end, you'll have to respond correctly at least 90% of the time. So try your best to do well in the addition task, but don't worry if you make a few mistakes occasionally.",
-"You'll have opportunities to take breaks during the experiment.",
-" "
+"Remember, you're making REAL choices from now on. Your choices and decisions are not hypothetical. We will convert the credits you earn during the task into monetary amounts and will pay you and {} accordingly.".format(charityChosen),
+"You'll have opportunities to take breaks during the experiment."
 ])
 
-runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=rewardLevels, effort=effortLevels)
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2, 4, 6, 9, 12], effort=[1, 2, 3, 5, 7])
 
-showInstructions(text = ["Take a break if you'd like to."])
+showInstructions(text = ["Take a break. Press space when ready to continue."])
 
-runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=rewardLevels, effort=effortLevels)
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2, 4, 6, 9, 12], effort=[1, 2, 3, 5, 7])
 
-showInstructions(text = ["Take a break if you'd like to."])
+showInstructions(text = ["Take a break. Press space when ready to continue."])
 
-runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=rewardLevels, effort=effortLevels)
+runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed', reps=1, feedback=True, saveData=True, practiceTrials=10, titrate=False, rtMaxFrames=300, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, reward=[2, 4, 6, 9, 12], effort=[1, 2, 3, 5, 7])
 
-showInstructions(text = ["That's the end of that choice task."])
+showInstructions(text = ["That's the end of the decision making task. Press space when ready to continue."])
 
 
 ''' post choice task effort questions '''
 showInstructions(text = ["Now you'll answer a few questions about the math task."])
 
-effortQuestions = ['How much effort did add 0 require?', 'How much effort did add 1 require?', 'How much effort did add 3 require?', 'How much effort did add 5 require?', 'How much effort did add 7 require?', 'How much effort did add 6 require?']
+effortQuestions = ['How much effort did add 0 require?', 'How much effort did add 1 require?', 'How much effort did add 2 require?', 'How much effort did add 3 require?', 'How much effort did add 5 require?', 'How much effort did add 7 require?']
 random.shuffle(effortQuestions)
 
 presentQuestions(questionName='effortFrustrateReport', questionList=effortQuestions, blockType='post', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['none at all', 'very much'])
 
 ''' frustrate questions '''
-frustrateQuestions = ['How frustrating was add 0?', 'How frustrating was add 1?', 'How frustrating was add 3?', 'How frustrating was add 5?', 'How frustrating was add 7?', 'How frustrating was add 6?']
+frustrateQuestions = ['How frustrating was add 0?', 'How frustrating was add 1?', 'How frustrating was add 2?', 'How frustrating was add 3?', 'How frustrating was add 5?', 'How frustrating was add 7?']
 random.shuffle(frustrateQuestions)
 
 presentQuestions(questionName='effortFrustrateReport', questionList=frustrateQuestions, blockType='post', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['not at all', 'very much'])
 
 
 ''' questionnaires '''
-showInstructions(text = ["Now you'll answer a few questions about yourself."])
-showAllQuestionnaires()
+# showInstructions(text = ["Now you'll answer a few questions about yourself."])
+# showAllQuestionnaires()
 
-''' show credits earned '''
+showInstructions(text = ["That's the end of the experiment. This is how much you have earned for yourself and {}.".format(charityChosen)])
 
-showCredit()
+''' notify credits/money earned '''
+creditCsv = "{:03d}-{}-effortRewardChoice.csv".format(int(info['participant']), info['startTime'])
+creditDf = pd.read_csv(creditCsv)
+creditDf = creditDf.dropna(subset=['accUpdating', 'reward'])
 
+creditSelfBaseline = creditDf.loc[(creditDf.beneficiary == 'self') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'baseline'), ].shape[0]
+creditSelfEffortful = int(creditDf.loc[(creditDf.beneficiary == 'self') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'effortful'), 'reward'].sum())
+creditSelf = creditSelfBaseline + creditSelfEffortful
+
+creditCharityBaseline = creditDf.loc[(creditDf.beneficiary == 'charity') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'baseline'), ].shape[0]
+creditCharityEffortful = int(creditDf.loc[(creditDf.beneficiary == 'charity') & (creditDf.accUpdating == 1.0) & (creditDf.choiceText == 'effortful'), 'reward'].sum())
+creditCharity = creditCharityBaseline + creditCharityEffortful
+
+moneySelf = 0.01 * creditSelf
+moneyCharity = 0.01 * creditCharity
+
+outputCsv = pd.DataFrame(index=range(0, 1))
+outputCsv['email'] = info['email']
+outputCsv['moneySelf'] = moneySelf
+outputCsv['moneyCharity'] = moneyCharity
+outputCsv['creditSelf'] = creditSelf
+outputCsv['creditCharity'] = creditCharity
+outputCsv['charityChosen'] = charityChosen
+
+outputCsv.to_csv("{:03d}-{}-REWARDINFO.csv".format(int(info['participant']), info['startTime']), index=False)
+
+# creditRewardInfoText = "{:03d}-{}-REWARDINFO.txt".format(int(info['participant']), info['startTime'])
+# with open(creditRewardInfoText, "w") as textFile: #write to text file
+#     textFile.write("email: {}; money self ${:.2f}; money charity ${:.2f}; credit self {}; credit charity {}".format(info['email'], moneySelf, moneyCharity, creditSelf, creditCharity))
+
+"You've earned {} credits for yourself, and {} credits for charity.".format(creditSelf, creditCharity)
+"These credits translate to the following: ${:.2f} for yourself, and ${:.2f} donated to your charity. We will email you your reward in the form of an Amazon voucher, and will help you donate to {}.".format(moneySelf, moneyCharity, charityChosen)
 
 ''' experiment end '''
 
@@ -1742,5 +1557,4 @@ showInstructions(text = ["That's the end of the experiment. Thanks so much for p
 if sendTTL:
     port.setData(255) # mark end of experiment
 
-win.close()
 core.quit() # quit PsychoPy
