@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5632cb5f-9cc8-4629-85d4-0402a9489378" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Prosocial effort/001-2018-09-19-22-58-17-effortRewardChoice.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Prosocial effort/001-2018-09-19-22-58-17-mentalMathUpdating.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Prosocial effort/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/Prosocial effort/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Prosocial effort/Script1_runStudy.py" beforeDir="false" afterPath="$PROJECT_DIR$/Prosocial effort/Script1_runStudy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Prosocial effort/_runTest.py" beforeDir="false" afterPath="$PROJECT_DIR$/Prosocial effort/_runTest.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scratch.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/other.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -33,13 +29,17 @@
     <session id="-1155127335">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="6" />
+          <entry key="project.closed" value="11" />
           <entry key="project.open.time.1" value="1" />
+          <entry key="project.open.time.11" value="1" />
+          <entry key="project.open.time.12" value="1" />
           <entry key="project.open.time.14" value="2" />
+          <entry key="project.open.time.15" value="1" />
           <entry key="project.open.time.4" value="1" />
+          <entry key="project.open.time.7" value="1" />
           <entry key="project.open.time.8" value="1" />
-          <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="6" />
+          <entry key="project.open.time.9" value="2" />
+          <entry key="project.opened" value="11" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -75,54 +75,33 @@
     <favorites_list name="PsychoPy Scripts" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.9">
-      <split-first>
-        <leaf>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/scratch.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="382">
-                  <caret line="63" selection-start-line="63" selection-end-line="63" />
-                  <folding>
-                    <element signature="e#86#105#0" expanded="true" />
-                    <marker date="1538004848497" expanded="true" signature="2131:2300" ph="..." />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/Visual search task/Script1.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="348">
-                  <caret line="358" column="67" lean-forward="true" selection-start-line="358" selection-start-column="67" selection-end-line="358" selection-end-column="67" />
-                  <folding>
-                    <element signature="e#0#19#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-        </leaf>
-      </split-first>
-      <split-second>
-        <leaf>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/scratch.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="160">
-                  <caret line="72" lean-forward="true" selection-start-line="70" selection-end-line="72" />
-                  <folding>
-                    <element signature="e#86#105#0" expanded="true" />
-                    <marker date="1538004848497" expanded="true" signature="2099:2300" ph="..." />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-        </leaf>
-      </split-second>
-    </splitter>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/scratch.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1080">
+              <caret line="63" selection-start-line="63" selection-end-line="63" />
+              <folding>
+                <element signature="e#86#105#0" expanded="true" />
+                <marker date="1538004848497" expanded="true" signature="2099:2300" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Visual search task/Script1.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="278">
+              <caret line="318" column="52" lean-forward="true" selection-start-line="318" selection-start-column="52" selection-end-line="318" selection-end-column="52" />
+              <folding>
+                <element signature="e#0#19#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -223,7 +202,7 @@
     <property name="last_opened_file_path" value="$USER_HOME$/anaconda/envs/python36nipype/bin/python3.6" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -282,7 +261,7 @@
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" auto_hide="true" content_ui="combo" x="0" y="0" width="1440" height="900" id="SciView" order="3" show_stripe_button="false" sideWeight="0.50136614" type="FLOATING" weight="0.19384836" />
+      <window_info anchor="right" content_ui="combo" x="0" y="0" width="1440" height="900" id="SciView" order="3" sideWeight="0.50136614" visible="true" weight="0.19384836" />
       <window_info anchor="right" id="Database" order="4" sideWeight="0.4986339" weight="0.26108727" />
       <window_info anchor="right" x="0" y="0" width="310" height="700" id="Documentation" order="5" side_tool="true" weight="0.3297568" />
     </layout>
@@ -318,13 +297,7 @@
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/02_eeg_pca_ica_example.ipynb" />
-    <entry file="file://$PROJECT_DIR$/test.ipynb">
-      <provider selected="true" editor-type-id="ipnb-editor">
-        <state>
-          <selected id="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/test.ipynb" />
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
@@ -342,19 +315,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scratch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="382">
+        <state relative-caret-position="1080">
           <caret line="63" selection-start-line="63" selection-end-line="63" />
           <folding>
             <element signature="e#86#105#0" expanded="true" />
-            <marker date="1538004848497" expanded="true" signature="2131:2300" ph="..." />
+            <marker date="1538004848497" expanded="true" signature="2099:2300" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Visual search task/Script1.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="348">
-          <caret line="358" column="67" lean-forward="true" selection-start-line="358" selection-start-column="67" selection-end-line="358" selection-end-column="67" />
+        <state relative-caret-position="278">
+          <caret line="318" column="52" lean-forward="true" selection-start-line="318" selection-start-column="52" selection-end-line="318" selection-end-column="52" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>

@@ -271,7 +271,7 @@ def runEffortRewardChoiceBlock(taskName='effortRewardChoice', blockType='mixed',
     # create stimuli that are constant for entire block
     # draw stimuli required for this block
     # [1.0,-1,-1] is red; #[1, 1, 1] is white
-    fixation = visual.TextStim(win=win, units='norm', height=0.12, ori=0, name='target', text='+', font='Courier New Bold', colorSpace='rgb', color=[-.3, -.3, -.3], opacity=1)
+    fixation = visual.TextStim(win=win, units='norm', height=0.12, ori=0, name='fixation', text='+', font='Courier New Bold', colorSpace='rgb', color=[-.3, -.3, -.3], opacity=1)
 
     constantOptionEffort = visual.TextStim(win = win, units = 'norm', height = 0.065, ori = 0, name = 'target', text = '1 stroop', font = 'Verdana', colorSpace = 'rgb', color = [1, 1, 1], opacity = 1, pos=(-0.2, 0.06))
 
