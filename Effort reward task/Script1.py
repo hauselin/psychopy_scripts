@@ -85,8 +85,11 @@ mouse.setVisible(0) # make mouse invisible
 
 event.globalKeys.add(key="escape", func=core.quit, modifiers=["ctrl"])
 
-feedbackTwinkle = sound.Sound(stimulusDir + 'twinkle.wav')
-feedbackTwinkle.setVolume(0.1)
+try:
+    feedbackTwinkle = sound.Sound(stimulusDir + 'twinkle.wav')
+    feedbackTwinkle.setVolume(0.1)
+except:
+    pass
 
 if sendTTL:
     port = parallel.ParallelPort(address=parallelPortAddress)
