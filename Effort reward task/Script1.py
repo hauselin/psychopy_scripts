@@ -1,3 +1,9 @@
+"""
+To skip a block, press ]
+To quit, press \
+"""
+
+
 import pandas as pd
 import numpy as np
 import random, os, time
@@ -7,7 +13,7 @@ from psychopy import visual, core, event, data, gui, logging, parallel, monitors
 from scipy import stats
 
 # set DEBUG mode: if True, participant ID will be 999 and display will not be fullscreen. If False, will have to provide participant ID and will be in fullscreen mode
-DEBUG = False
+DEBUG = True
 sendTTL = False # whether to send TTL pulses to acquisition computer
 parallelPortAddress = 49168 # set parallel port address (EEG3: 49168, EEG1: 57360)
 screenRefreshRate = 60 # screen refresh rate
@@ -95,7 +101,7 @@ if sendTTL:
     port = parallel.ParallelPort(address=parallelPortAddress)
     port.setData(0) #make sure all pins are low
 
-def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, trials=[5, 5], dotDirections=[0, 180], nDots=[50, 500], coherence=[0.2, 0.2], dotFrames=[3, 3], speed=[0.01, 0.01], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=240, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
+def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, trials=[5, 5], dotDirections=[0, 180], nDots=[50, 500], coherence=[0.2, 0.2], dotFrames=[3, 3], speed=[0.01, 0.01], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
     '''Run a block of trials.
     blockType: custom name of the block; if blockType is set to 'practice', then no TTLs will be sent and the number of trials to run will be determined by argument supplied to parameter practiceTrials.
     feedback: whether feedback is presented or not
@@ -434,19 +440,21 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
                 taskQuestions = ["How confident are you?", "How much effort did it require?"]
                 ratingsDf = presentQuestions(questionName=taskName+'_ratings', questionList=taskQuestions, blockType='', saveData=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
 
-                try:
-                    ratingsDf_tojoin = ratingsDf[['questionText', 'resp', 'rt']].copy()  # select columns
-                    ratingsDf_tojoin.columns = "ratingConfidence_" + ratingsDf_tojoin.columns  # rename columns
-                    for j in ratingsDf_tojoin.columns:  # add columns to trialsDf
-                        trialsDf.loc[i, j] = ratingsDf_tojoin.loc[0, j] # confidence
+            try:
+                ratingsDf_tojoin = ratingsDf[['questionText', 'resp', 'rt']].copy()  # select columns
+                ratingsDf_tojoin.columns = "ratingConfidence_" + ratingsDf_tojoin.columns  # rename columns
+                for j in ratingsDf_tojoin.columns:  # add columns to trialsDf
+                    trialsDf.loc[i, j] = ratingsDf_tojoin.loc[0, j] # confidence
 
-                    ratingsDf_tojoin = ratingsDf[['questionText', 'resp', 'rt']].copy()  # select columns
-                    ratingsDf_tojoin.columns = "ratingEffort_" + ratingsDf_tojoin.columns  # rename columns
-                    for j in ratingsDf_tojoin.columns:  # add columns to trialsDf
-                        trialsDf.loc[i, j] = ratingsDf_tojoin.loc[1, j] # effort
-                    print trialsDf
-                except:
-                    pass
+                ratingsDf_tojoin = ratingsDf[['questionText', 'resp', 'rt']].copy()  # select columns
+                ratingsDf_tojoin.columns = "ratingEffort_" + ratingsDf_tojoin.columns  # rename columns
+                for j in ratingsDf_tojoin.columns:  # add columns to trialsDf
+                    trialsDf.loc[i, j] = ratingsDf_tojoin.loc[1, j] # effort
+
+            except:
+                columnsToSave_newNames = ['ratingConfidence_' + x for x in ['questionText', 'resp', 'rt']] + ['ratingEffort_' + x for x in ['questionText', 'resp', 'rt']]
+                for j in columnsToSave_newNames:  # add columns to trialsDf
+                    trialsDf.loc[i, j] = np.nan
 
             ratingsDf = pd.DataFrame()  # clear dataframe for next trial
 
@@ -522,7 +530,7 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
     return trialsDf # return dataframe
 
 
-def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=240, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
+def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
     '''Run a block of trials.
     blockType: custom name of the block; if blockType is set to 'practice', then no TTLs will be sent and the number of trials to run will be determined by argument supplied to parameter practiceTrials.
     feedback: whether feedback is presented or not
@@ -611,7 +619,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
     # trialsDf['choice'] = np.nan
     trialsDf['overallTrialNum'] = 0 # cannot use np.nan because it's a float, not int!
     trialsDf['keypress'] = None
-    trialsDf['acc'] = 0
+    trialsDf['choiceLowHighEffort'] = 0
     trialsDf['creditsEarned'] = 0
 
     # running accuracy and rt
@@ -767,7 +775,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
                 ##print "First frame in Block %d Trial %d OverallTrialNum %d" %(blockNumber, i + 1, trialsDf.loc[i, 'overallTrialNum'])
                 ##print "Stimulus TTL: %d" %(int(thisTrial['TTLStim']))
             else:
-                keys = event.getKeys(keyList = ['f', 'j', 'left', 'right', 'backslash', 'bracketright'])
+                keys = event.getKeys(keyList = ['left', 'right', 'backslash', 'bracketright'])
                 if len(keys) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
                     trialsDf.loc[i, 'rt'] = respClock.getTime() #store RT
                     trialsDf.loc[i, 'resp'] = keys[0] #store response in pd df
@@ -776,27 +784,27 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
                     if keys[0] == 'left' and thisTrial['task1'] > thisTrial['task2']:
                         if sendTTL and not blockType == 'practice':
                             port.setData(251)
-                        trialsDf.loc[i, 'acc'] = 1
+                        trialsDf.loc[i, 'choiceLowHighEffort'] = 1
                         trialsDf.loc[i, 'choice'] = thisTrial['task1']
                     elif keys[0] == 'right' and thisTrial['task2'] > thisTrial['task1']:
                         if sendTTL and not blockType == 'practice':
                             port.setData(251)
-                        trialsDf.loc[i, 'acc'] = 1
+                        trialsDf.loc[i, 'choiceLowHighEffort'] = 1
                         trialsDf.loc[i, 'choice'] = thisTrial['task2']
                     elif keys[0] == 'left' and thisTrial['task1'] < thisTrial['task2']:
                         if sendTTL and not blockType == 'practice':
                             port.setData(250)
-                        trialsDf.loc[i, 'acc'] = 1
+                        trialsDf.loc[i, 'choiceLowHighEffort'] = 0
                         trialsDf.loc[i, 'choice'] = thisTrial['task1']
                     elif keys[0] == 'right' and thisTrial['task2'] < thisTrial['task1']:
                         if sendTTL and not blockType == 'practice':
                             port.setData(250)
-                        trialsDf.loc[i, 'acc'] = 1
+                        trialsDf.loc[i, 'choiceLowHighEffort'] = 0
                         trialsDf.loc[i, 'choice'] = thisTrial['task2']
                     else:
                         if sendTTL and not blockType == 'practice':
                             port.setData(249) #invalid response
-                        trialsDf.loc[i, 'acc'] = 0
+                        trialsDf.loc[i, 'choiceLowHighEffort'] = np.nan
 
                     # save responseTTL
                     if trialsDf.loc[i, 'choice'] == np.max([thisTrial['task1'], thisTrial['task2']]):
@@ -814,7 +822,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
 
         #if not response has been made within allowed time, remove stimuli and record accuracay
         if trialsDf.loc[i, 'resp'] is None: #if no response made
-            trialsDf.loc[i, 'acc'] = 0 # change according for each experiment (0 or np.nan)
+            trialsDf.loc[i, 'choiceLowHighEffort'] = np.nan # change according for each experiment (0 or np.nan)
             trialsDf.loc[i, 'rt'] = np.nan
             trialsDf.loc[i, 'choice'] = np.nan
             leftOption.setAutoDraw(False)  # remove stimuli from screen
@@ -822,7 +830,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
             win.flip() #clear screen (remove stuff from screen)
 
         # append to running accuracy and rt
-        runningTallyAcc.append(trialsDf.loc[i, 'acc'])
+        runningTallyAcc.append(trialsDf.loc[i, 'choiceLowHighEffort'])
         runningTallyRt.append(trialsDf.loc[i, 'rt'])
 
         if sendTTL and not blockType == 'practice':
@@ -845,7 +853,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
         if trialsDf.loc[i, 'resp'] in ['backslash', 'bracketright']:
             trialsDf.loc[i, 'responseTTL'] = np.nan
             trialsDf.loc[i, 'choice'] = np.nan
-            trialsDf.loc[i, 'acc'] = np.nan
+            trialsDf.loc[i, 'choiceLowHighEffort'] = np.nan
             trialsDf.loc[i, 'rt'] = np.nan
             trialsDf.loc[i, 'keypress'] = None
             if saveData: #if saveData argument is True, then APPEND current row/trial to csv
@@ -868,16 +876,19 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
         taskDf = pd.DataFrame()  # clear dataframe for next trial
         if trialsDf.loc[i, 'resp'] is not None:
             effortTaskIndex = int(trialsDf.loc[i, 'choice'])
-            taskDf = runDotMotionBlock(taskName='dst_dotMotion_trials', blockType=i+1, effortLevel=effortTaskIndex, trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=False, saveData=False, practiceTrials=5, titrate=False, rtMaxFrames=240, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+            taskDf = runDotMotionBlock(taskName='dst_dotMotion_trials', blockType=i+1, effortLevel=effortTaskIndex, trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=False, saveData=False, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+
+        columnsToSave = ['effortLevel', 'nDots', 'coherence', 'dotFrames', 'speed', 'dotDirections', 'resp', 'rt', 'acc']
+        columnsToSave_newNames = ["dotMotion_" + x for x in columnsToSave]
 
         try:
-            taskDf_tojoin = taskDf[['effortLevel', 'nDots', 'coherence', 'dotFrames', 'speed', 'dotDirections', 'resp', 'rt', 'acc']] # select columns
-            taskDf_tojoin.columns = "dotMotion_" + taskDf_tojoin.columns  # rename columns
-            # taskDf_tojoin.index = range(i, i+1) # change index
-            for j in taskDf_tojoin.columns: # add columns to trialsDf
+            taskDf_tojoin = taskDf[columnsToSave] # select columns
+            taskDf_tojoin.columns = columnsToSave_newNames  # rename columns
+            for j in columnsToSave_newNames: # add columns to trialsDf
                 trialsDf.loc[i, j] = taskDf_tojoin.loc[0, j]
         except:
-            pass
+            for j in columnsToSave_newNames: # add columns to trialsDf
+                trialsDf.loc[i, j] = np.nan
 
         # print trialsDf
         taskDf = pd.DataFrame()  # clear dataframe for next trial
@@ -1281,26 +1292,30 @@ info['coherence'] = [0.05, 0.05, 0.05]
 info['dotFrames'] = [3, 3, 3]
 info['speed'] = [0.01, 0.01, 0.01]
 
+runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 
 showInstructions(text=
 ["",
  "You'll do several tasks in this experiment. Different tasks will be represented by different symbols: |, ||, ||| etc.",
- "One task is the dot motion detection task. You'll see many dots moving in random directions, but a subset of them will move in one consistent direction.",
- "You'll have to indicate which direction this consistent subset of dots is moving towards by pressing the arrow keys.",
+ "Try to learn and remember what task each symbol refers to.",
+ "One task is the dot motion detection task. You'll see many dots moving in random directions, but a SUBSET of them will move in one consistent direction.",
+ "When the dots are moving, you have up to 3 seconds to indicate which direction this consistent SUBSET of dots is moving towards by pressing the arrow keys.",
+ "DO NOT WAIT until the dots have been removed from the display before you respond. If you didn't respond in time, you'll see the message 'respond faster'.",
  "Sometimes, after you've responded, you'll be asked to indicate how confident you are in your responses and how much effort the task required.",
  "Let's try a few examples."
 ])
 
-runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 50, 500], coherence=[0.4, 0.6, 0.8], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 showInstructions(text=["That's the end of practice. Let's begin the actual task now."])
 
 runDotMotionBlock(taskName='dotMotionForced', blockType='dotMotionForced', trials=[5, 5, 5], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 showInstructions(text=["That's the end of that section."])
 
 showInstructions(text=
-["Now you get to decide which task you'll want to do.",
- "You'll see two symbols (e.g., | and |||) on the left and right of the display, representing two different tasks you could do. Press the left and right arrow keys to indicate which option you prefer to do.",
- "You'll then do the task you've chosen. Again, use the arrow keys to indicate the direction of motion.",
+["Now you get to decide which task you prefer to do.",
+ "You'll first see two symbols (e.g., | and |||) on the left and right of the display. Each symbol represents a task you could do. For example, if you prefer to do the task represented by the symbol on the left of the display, press the left arrow key.",
+ "Use the left and right arrow keys to indicate which task you prefer to do.",
+ "You'll then do the task you've chosen. Again, use the arrow keys to respond when doing the task.",
  "Let's practice."
 ])
 runDemandSelection(taskName='dotMotionPractice', blockType='dotMotionPractice', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=False, practiceTrials=3, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
