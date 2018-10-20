@@ -7,7 +7,7 @@ Task flow
 * actual dot motion tasks (to get confidence and effort ratings for each effort level): 3 effort levels with 10, 100, 500 dots (all 0.05 motion coherence; 5 reps each, so 15 trials in total) (confidence/effort rating after each trial)
 * practice demand selection task (not collecting confidence/effort ratings)
 * actual demand selection task: efforts 1vs2, 1vs3, 2vs3 (10 trials each) (not collecting confidence/effort ratings)
-* RT deadline is always 3s
+* RT deadline is 3s
 
 Written by Hause Lin
 Tested in PsychoPy 1.90.2 (MacOS)
@@ -30,6 +30,7 @@ screenRefreshRate = 60 # screen refresh rate
 monitor = 'iMac' # display name (set up beforehand in PsychoPy preferences/settings)
 # monitor = 'BehavioralLab'
 stimulusDir = 'Stimuli' + os.path.sep  # stimulus directory/folder/path
+event.globalKeys.add(key="escape", func=core.quit, modifiers=["ctrl"]) # Ctrl+Esc to quit at any point without saving data
 
 # EXPERIMENT SET UP
 info = {} # create empty dictionary to store stuff
@@ -52,16 +53,11 @@ else: #if DEBUG is not False... (or True)
 # change type
 info['participant'] = int(info['participant'])
 info['age'] = int(info['age'])
-
-# add info
-info['scriptDate'] = "191018"
+info['scriptDate'] = "191018"  # when was script last modified
 info['screenRefreshRate'] = screenRefreshRate
 
-# empty dataframes to append backup dataframes later on
-dataframes = {}
-
-info['fixationS'] = 1.5
-info['fixationFrames'] = int(info['fixationS'] * screenRefreshRate)
+info['fixationS'] = 1.5 # fixation cross duration (seconds)
+info['fixationFrames'] = int(info['fixationS'] * screenRefreshRate) # fixation cross (frames)
 
 #info['postFixationFrames'] = 36 #frames (600ms)
 #info['postFixationFrames'] = np.arange(36, 43, 1) #36 frames to 42 frames (600 ms to 700ms)
@@ -99,8 +95,6 @@ win = visual.Window(size=(900, 600), fullscr=fullscreen, units='norm', monitor=m
 mouse = event.Mouse(visible=False, win=win)
 mouse.setVisible(0) # make mouse invisible
 
-event.globalKeys.add(key="escape", func=core.quit, modifiers=["ctrl"])
-
 try:
     feedbackTwinkle = sound.Sound(stimulusDir + 'twinkle.wav')
     feedbackTwinkle.setVolume(0.1)
@@ -111,14 +105,14 @@ if sendTTL:
     port = parallel.ParallelPort(address=parallelPortAddress)
     port.setData(0) #make sure all pins are low
 
-def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, trials=[5, 5], dotDirections=[0, 180], nDots=[50, 500], coherence=[0.2, 0.2], dotFrames=[3, 3], speed=[0.01, 0.01], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
+def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, trials=[5, 5], dotDirections=[0, 180], nDots=[50, 500], coherence=[0.2, 0.2], dotFrames=[3, 3], speed=[0.01, 0.01], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
     '''Run a block of trials.
     blockType: custom name of the block; if blockType is set to 'practice', then no TTLs will be sent and the number of trials to run will be determined by argument supplied to parameter practiceTrials.
     feedback: whether feedback is presented or not
     saveData = whether to save data to csv file
     practiceTrials: no. of practice trials to run
     titrate: whether to adjust difficulty of task based on performance; if set to True, subsequent targetFrames (max response time) for subsequent blocks will be affected
-    rtmaxFrames: max rt (in frames); default is None, which takes value from info['targetFrames']; if a value is provided, default will be overwritten
+    rtMaxS: max rt (in seconds); default is None, which takes value from info['targetS']; if a value is provided, default will be overwritten
     blockMaxTimeSeconds: end block if overall time of BLOCK (in seconds) has passed
     experimentMaxTimeSeconds: end block if overall time of EXPERIMENT (in seconds) has passed
     feedbackS: no. of seconds to show feedback
@@ -127,12 +121,11 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
     pauseAfterMissingNTrials: pause task if missed N responses
     '''
 
-    global dataframes
-    dataframes[taskName] = pd.DataFrame()
+    global info
+    info[taskName] = pd.DataFrame()
 
     # csv filename to store data
     filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName) # saved after each trial
-    filenamebackup = "{:03d}-{}-{}-backup.csv".format(int(info['participant']), info['startTime'], taskName) # saved after each block
 
     mouse.setVisible(0) #make mouse invisible
 
@@ -192,9 +185,10 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
     trialsDf['trialNo'] = range(1, trialsDf.shape[0] + 1) # add trialNo
     trialsDf['blockType'] = blockType # add blockType
     trialsDf['task'] = taskName
-    if rtMaxFrames is not None:
-        trialsDf['targetFrames'] = rtMaxFrames
-    trialsDf['targetS'] = trialsDf['targetFrames'] * screenRefreshRate
+    if rtMaxS is not None:
+        rtMaxS = float(rtMaxS)
+        trialsDf['targetS'] = rtMaxS
+        trialsDf['targetFrames'] = int(rtMaxS * screenRefreshRate)
 
     # create variables to store data later
     trialsDf['blockNumber'] = 0 # add blockNumber
@@ -313,7 +307,7 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
             targetFramesCurrentTrial = int(trialsDf.loc[i, 'targetFrames']) # try reading from trialsDf
         except:
             try:
-                targetFramesCurrentTrial = int(rtMaxFrames) # try using parameter argument rtMaxFrames
+                targetFramesCurrentTrial = int(rtMaxS * screenRefreshRate)  # try using parameter argument rtMaxS
             except:
                 try:
                     targetFramesCurrentTrial = int(info['targetFrames']) # try reading from info dictionary
@@ -422,8 +416,8 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
             trialsDf.loc[i, 'keypress'] = None
             if saveData: #if saveData argument is True, then APPEND current row/trial to csv
                 trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
-                dataframes[taskName] = dataframes[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
-                dataframes[taskName].to_csv(filenamebackup, index=False)
+                info[taskName] = info[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
+                np.save("{:03d}-{}-pythonBackup.npy".format(info['participant'], info['startTime']), info)
             win.close()
             core.quit()
         elif trialsDf.loc[i, 'resp'] == 'bracketright':# skip to next block
@@ -435,8 +429,8 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
             win.flip()
             if saveData: #if saveData argument is True, then append current row/trial to csv
                 trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
-                dataframes[taskName] = dataframes[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
-                dataframes[taskName].to_csv(filenamebackup, index=False)
+                info[taskName] = info[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
+                np.save("{:03d}-{}-pythonBackup.npy".format(info['participant'], info['startTime']), info)
             return None
 
         ''' DO NOT EDIT END '''
@@ -448,7 +442,7 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
             ratingsDf = pd.DataFrame()
             if trialsDf.loc[i, 'resp'] is not None:  # if no response made
                 taskQuestions = ["How confident are you?", "How much effort did it require?"]
-                ratingsDf = presentQuestions(questionName=taskName+'_ratings', questionList=taskQuestions, blockType='', saveData=False, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
+                ratingsDf = presentQuestions(questionName=taskName+'_ratings', questionList=taskQuestions, blockType='', saveData=False, rtMaxS=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
 
             try:
                 ratingsDf_tojoin = ratingsDf[['questionText', 'resp', 'rt']].copy()  # select columns
@@ -470,7 +464,7 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
 
         if saveData: #if saveData argument is True, then append current row/trial to csv
             trialsDf[i:i+1].to_csv(filename, header=True if i == 0 and writeHeader else False, mode='a', index=False) #write header only if index i is 0 AND block is 1 (first block)
-            dataframes[taskName] = dataframes[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
+            info[taskName] = info[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
 
         # feedback for trial
         if feedback:
@@ -533,21 +527,20 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
     for frameN in range(30):
         win.flip() #wait at the end of the block
 
-    # append data to global dataframe
-    if saveData:
-        dataframes[taskName].to_csv(filenamebackup, index=False)
+    if saveData: # save info at the end of block
+        np.save("{:03d}-{}-pythonBackup.npy".format(info['participant'], info['startTime']), info)
 
     return trialsDf # return dataframe
 
 
-def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
+def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=False, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False):
     '''Run a block of trials.
     blockType: custom name of the block; if blockType is set to 'practice', then no TTLs will be sent and the number of trials to run will be determined by argument supplied to parameter practiceTrials.
     feedback: whether feedback is presented or not
     saveData = whether to save data to csv file
     practiceTrials: no. of practice trials to run
     titrate: whether to adjust difficulty of task based on performance; if set to True, subsequent targetFrames (max response time) for subsequent blocks will be affected
-    rtmaxFrames: max rt (in frames); default is None, which takes value from info['targetFrames']; if a value is provided, default will be overwritten
+    rtMaxS: max rt (in seconds); default is None, which takes value from info['targetS']; if a value is provided, default will be overwritten
     blockMaxTimeSeconds: end block if overall time of BLOCK (in seconds) has passed
     experimentMaxTimeSeconds: end block if overall time of EXPERIMENT (in seconds) has passed
     feedbackS: no. of seconds to show feedback
@@ -556,12 +549,11 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
     pauseAfterMissingNTrials: pause task if missed N responses
     '''
 
-    global dataframes
-    dataframes[taskName] = pd.DataFrame()
+    global info
+    info[taskName] = pd.DataFrame()
 
     # csv filename to store data
     filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], taskName) # saved after each trial
-    filenamebackup = "{:03d}-{}-{}-backup.csv".format(int(info['participant']), info['startTime'], taskName) # saved after each block
 
     mouse.setVisible(0) #make mouse invisible
 
@@ -614,9 +606,10 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
     trialsDf['trialNo'] = range(1, trialsDf.shape[0] + 1) # add trialNo
     trialsDf['blockType'] = blockType # add blockType
     trialsDf['task'] = taskName
-    if rtMaxFrames is not None:
-        trialsDf['targetFrames'] = rtMaxFrames
-    trialsDf['targetS'] = trialsDf['targetFrames'] * screenRefreshRate
+    if rtMaxS is not None:
+        rtMaxS = float(rtMaxS)
+        trialsDf['targetS'] = rtMaxS
+        trialsDf['targetFrames'] = int(rtMaxS * screenRefreshRate)
 
     # create variables to store data later
     trialsDf['blockNumber'] = 0 # add blockNumber
@@ -740,7 +733,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
             targetFramesCurrentTrial = int(trialsDf.loc[i, 'targetFrames']) # try reading from trialsDf
         except:
             try:
-                targetFramesCurrentTrial = int(rtMaxFrames) # try using parameter argument rtMaxFrames
+                targetFramesCurrentTrial = int(rtMaxS * screenRefreshRate)  # try using parameter argument rtMaxS
             except:
                 try:
                     targetFramesCurrentTrial = int(info['targetFrames']) # try reading from info dictionary
@@ -868,9 +861,8 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
             trialsDf.loc[i, 'keypress'] = None
             if saveData: #if saveData argument is True, then APPEND current row/trial to csv
                 trialsDf[i:i+1].to_csv(filename, header=True if i == 0 and writeHeader else False, mode='a', index=False) #write header only if index i is 0 AND block is 1 (first block)
-                dataframes[taskName] = dataframes[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
-                dataframes[taskName].to_csv(filenamebackup, index=False)
-
+                info[taskName] = info[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
+                np.save("{:03d}-{}-pythonBackup.npy".format(info['participant'], info['startTime']), info)
             if trialsDf.loc[i, 'resp'] == 'bracketright':
                 trialsDf.loc[i, 'resp'] = None
                 win.flip()
@@ -879,14 +871,13 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
                 trialsDf.loc[i, 'resp'] = None
                 win.close()
                 core.quit()
-
         ''' DO NOT EDIT END '''
 
         '''RUN DOT MOTION TASK'''
         taskDf = pd.DataFrame()  # clear dataframe for next trial
         if trialsDf.loc[i, 'resp'] is not None:
             effortTaskIndex = int(trialsDf.loc[i, 'choice'])
-            taskDf = runDotMotionBlock(taskName='dst_dotMotion_trials', blockType=i+1, effortLevel=effortTaskIndex, trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=False, saveData=False, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+            taskDf = runDotMotionBlock(taskName='dst_dotMotion_trials', blockType=i+1, effortLevel=effortTaskIndex, trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=False, saveData=False, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 
         columnsToSave = ['effortLevel', 'nDots', 'coherence', 'dotFrames', 'speed', 'dotDirections', 'resp', 'rt', 'acc']
         columnsToSave_newNames = ["dotMotion_" + x for x in columnsToSave]
@@ -906,7 +897,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
 
         if saveData: #if saveData argument is True, then append current row/trial to csv
             trialsDf[i:i+1].to_csv(filename, header=True if i == 0 and writeHeader else False, mode='a', index=False) #write header only if index i is 0 AND block is 1 (first block)
-            dataframes[taskName] = dataframes[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
+            info[taskName] = info[taskName].append(trialsDf[i:i+1]).reset_index(drop=True)
         ISI.complete() #end inter-trial interval
 
         # feedback for trial
@@ -974,15 +965,16 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
     for frameN in range(30):
         win.flip() #wait at the end of the block
 
-    # append data to global dataframe
-    if saveData:
-        dataframes[taskName].to_csv(filenamebackup, index=False)
+    if saveData: # save info at the end of block
+        np.save("{:03d}-{}-pythonBackup.npy".format(info['participant'], info['startTime']), info)
 
     return trialsDf # return dataframe
 
 
-def presentQuestions(questionName='questionnaireName', questionList=['Question 1?', 'Question 2?'], blockType='', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['not at all', 'very much'], showAnchors=True):
+def presentQuestions(questionName='questionnaireName', questionList=['Question 1?', 'Question 2?'], blockType='', saveData=True, rtMaxS=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1,9], scaleAnchorText=['not at all', 'very much'], showAnchors=True):
 
+    global info
+    info[questionName] = pd.DataFrame()
     # csv filename to store data
     filename = "{:03d}-{}-{}.csv".format(int(info['participant']), info['startTime'], questionName)
 
@@ -997,7 +989,6 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
     ''' DO NOT EDIT END '''
 
     # store info in data frame
-
     trialsDf = pd.DataFrame(index=np.arange(len(questionList))) # create empty dataframe
     #store additional info in dataframe
     trialsDf['participant'] = int(info['participant'])
@@ -1014,11 +1005,13 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
     trialsDf['blockType'] = blockType #add blockType
     trialsDf['task'] = questionName #task name
     trialsDf['postFixationFrames'] = np.nan
-    if rtMaxFrames is None:
-        trialsDf['targetFrames'] = 9999
+    if rtMaxS is None:
+        trialsDf['targetS'] = 600
+        trialsDf['targetFrames'] = trialsDf['targetS'] * screenRefreshRate
     else:
-        trialsDf['targetFrames'] = rtMaxFrames
-    trialsDf['targetS'] = trialsDf['targetFrames'] * screenRefreshRate
+        rtMaxS = float(rtMaxS)
+        trialsDf['targetS'] = rtMaxS
+        trialsDf['targetFrames'] = rtMaxS * screenRefreshRate
 
     trialsDf['startTime'] = info['startTime']
     trialsDf['endTime'] = info['endTime']
@@ -1185,6 +1178,7 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
             scaleAnchorTextRightText.setAutoDraw(False)
             if saveData: #if saveData argument is True, then append current row/trial to csv
                 trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
+                info[questionName] = info[questionName].append(trialsDf[i:i + 1]).reset_index(drop=True)
             win.close()
             core.quit() #quit when 'backslash' has been pressed
         elif trialsDf.loc[i, 'resp'] == 'bracketright':#if press 7, skip to next block
@@ -1197,10 +1191,12 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
             scaleAnchorTextRightText.setAutoDraw(False)
             if saveData: #if saveData argument is True, then append current row/trial to csv
                 trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
+                info[questionName] = info[questionName].append(trialsDf[i:i + 1]).reset_index(drop=True)
             return None
 
         if saveData: #if saveData argument is True, then append current row/trial to csv
             trialsDf[i:i+1].to_csv(filename, header = True if i == 0 and writeHeader else False, mode = 'a', index = False) #write header only if index i is 0 AND block is 1 (first block)
+            info[questionName] = info[questionName].append(trialsDf[i:i + 1]).reset_index(drop=True)
         ''' DO NOT EDIT END '''
 
         ISI.complete() #end inter-trial interval
@@ -1213,10 +1209,10 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
     for frameN in range(info['blockEndPauseFrames']):
         win.flip() #wait at the end of the block
 
+    if saveData: # save info at the end of block
+        np.save("{:03d}-{}-pythonBackup.npy".format(info['participant'], info['startTime']), info)
+
     return trialsDf
-
-
-
 
 
 def showInstructions(text, timeBeforeAutomaticProceed=0, timeBeforeShowingSpace =0):
@@ -1302,7 +1298,7 @@ info['coherence'] = [0.05, 0.05, 0.05]
 info['dotFrames'] = [3, 3, 3]
 info['speed'] = [0.01, 0.01, 0.01]
 
-runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 
 showInstructions(text=
 ["",
@@ -1315,10 +1311,10 @@ showInstructions(text=
  "Let's try a few examples."
 ])
 
-runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 showInstructions(text=["That's the end of practice. Let's begin the actual task now."])
 
-runDotMotionBlock(taskName='dotMotionForced', blockType='dotMotionForced', trials=[5, 5, 5], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+runDotMotionBlock(taskName='dotMotionForced', blockType='dotMotionForced', trials=[5, 5, 5], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 showInstructions(text=["That's the end of that section."])
 
 showInstructions(text=
@@ -1328,14 +1324,14 @@ showInstructions(text=
  "You'll then do the task you've chosen. Again, use the arrow keys to respond when doing the task.",
  "Let's practice."
 ])
-runDemandSelection(taskName='dotMotionPractice', blockType='dotMotionPractice', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=False, practiceTrials=3, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+runDemandSelection(taskName='dotMotionPractice', blockType='dotMotionPractice', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=False, practiceTrials=3, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 showInstructions(text=["That's the end of practice. Let's begin the actual task now."])
 
-runDemandSelection(taskName='dotMotionDST', blockType='dotMotionDST', trials=[10, 10, 10], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxFrames=180, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+runDemandSelection(taskName='dotMotionDST', blockType='dotMotionDST', trials=[10, 10, 10], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 showInstructions(text=["That's the end of the task."])
 
 taskQuestions = ["Overall, how much did you believe the accuracy feedback you received after you make each response?"]
-ratingsDf = presentQuestions(questionName='belief', questionList=taskQuestions, blockType='', saveData=True, rtMaxFrames=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
+ratingsDf = presentQuestions(questionName='belief', questionList=taskQuestions, blockType='', saveData=True, rtMaxS=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
 
 showInstructions(text=["Thank you for taking part in this experiment."])
 
