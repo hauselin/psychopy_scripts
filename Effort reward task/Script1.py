@@ -344,7 +344,7 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
                 ##print "First frame in Block %d Trial %d OverallTrialNum %d" %(blockNumber, i + 1, trialsDf.loc[i, 'overallTrialNum'])
                 ##print "Stimulus TTL: %d" %(int(thisTrial['TTLStim']))
             else:
-                keys = event.getKeys(keyList = ['f', 'j', 'left', 'right', 'up', 'down', 'backslash', 'bracketright'])
+                keys = event.getKeys(keyList=['left', 'right', 'up', 'down', 'backslash', 'bracketright'])
                 if len(keys) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
                     trialsDf.loc[i, 'rt'] = respClock.getTime() #store RT
                     trialsDf.loc[i, 'resp'] = keys[0] #store response in pd df
@@ -778,7 +778,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
                 ##print "First frame in Block %d Trial %d OverallTrialNum %d" %(blockNumber, i + 1, trialsDf.loc[i, 'overallTrialNum'])
                 ##print "Stimulus TTL: %d" %(int(thisTrial['TTLStim']))
             else:
-                keys = event.getKeys(keyList = ['left', 'right', 'backslash', 'bracketright'])
+                keys = event.getKeys(keyList=['left', 'right', 'backslash', 'bracketright'])
                 if len(keys) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
                     trialsDf.loc[i, 'rt'] = respClock.getTime() #store RT
                     trialsDf.loc[i, 'resp'] = keys[0] #store response in pd df
@@ -1133,7 +1133,7 @@ def presentQuestions(questionName='questionnaireName', questionList=['Question 1
                 else:
                     pass
             else:
-                keys = event.getKeys(keyList = keysAccepted)
+                keys = event.getKeys(keyList=keysAccepted)
                 if len(keys) > 0 and trialsDf.loc[i, 'resp'] is None: #if a response has been made
                     trialsDf.loc[i, 'rt'] = respClock.getTime() #store RT
                     trialsDf.loc[i, 'resp'] = keys[0] #store response in pd df
