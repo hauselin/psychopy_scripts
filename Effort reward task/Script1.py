@@ -1,8 +1,18 @@
 """
 To skip a block, press ]
 To quit, press \
-"""
 
+Task flow
+* practice dot motion tasks: 3 easy dot motion trials with 0.4, 0.6, 0.8 coherence and 10, 100, 500 dots respectively (rate confidence and effort required after each trial; 9-point scale)
+* actual dot motion tasks (to get confidence and effort ratings for each effort level): 3 effort levels with 10, 100, 500 dots (all 0.05 motion coherence; 5 reps each, so 15 trials in total) (confidence/effort rating after each trial)
+* practice demand selection task (not collecting confidence/effort ratings)
+* actual demand selection task: efforts 1vs2, 1vs3, 2vs3 (10 trials each) (not collecting confidence/effort ratings)
+* RT deadline is always 3s
+
+Written by Hause Lin
+Tested in PsychoPy 1.90.2 (MacOS)
+Last modified by Hause Lin 18-10-18 17:50 hauselin@gmail.com
+"""
 
 import pandas as pd
 import numpy as np
@@ -44,10 +54,10 @@ info['participant'] = int(info['participant'])
 info['age'] = int(info['age'])
 
 # add info
-info['scriptDate'] = "151018"
+info['scriptDate'] = "191018"
 info['screenRefreshRate'] = screenRefreshRate
 
-# empty dataframes to append dataframes later on
+# empty dataframes to append backup dataframes later on
 dataframes = {}
 
 info['fixationS'] = 1.5
