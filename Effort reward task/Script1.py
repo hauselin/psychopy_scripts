@@ -11,7 +11,7 @@ Task flow
 
 Written by Hause Lin
 Tested in PsychoPy 1.90.2 (MacOS)
-Last modified by Hause Lin 21-10-18 14:06 hauselin@gmail.com
+Last modified by Hause Lin 21-10-18 18:55 hauselin@gmail.com
 """
 
 import pandas as pd
