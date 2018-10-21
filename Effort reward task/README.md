@@ -2,6 +2,8 @@ To skip a block, press ]
 
 To quit, press \
 
+Written by Hause Lin hauselin@gmail.com
+
 ## Pilot 1 Task flow
 
 * practice dot motion tasks: 3 easy dot motion trials with 0.4, 0.6, 0.8 coherence and 10, 100, 500 dots respectively (rate confidence and effort required after each trial; 9-point scale)
@@ -13,8 +15,3 @@ To quit, press \
 
 Tested in PsychoPy 1.90.2 (MacOS)
 
-Written by Hause Lin
-
-Last modified by Hause Lin 20-10-18 11:40 hauselin@gmail.com
-
-"""

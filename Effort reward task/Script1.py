@@ -7,11 +7,11 @@ Task flow
 * actual dot motion tasks (to get confidence and effort ratings for each effort level): 3 effort levels with 10, 100, 500 dots (all 0.05 motion coherence; 5 reps each, so 15 trials in total) (confidence/effort rating after each trial)
 * practice demand selection task (not collecting confidence/effort ratings)
 * actual demand selection task: efforts 1vs2, 1vs3, 2vs3 (10 trials each) (not collecting confidence/effort ratings)
-* RT deadline is 3s
+* RT deadline is 4s
 
 Written by Hause Lin
 Tested in PsychoPy 1.90.2 (MacOS)
-Last modified by Hause Lin 18-10-18 17:50 hauselin@gmail.com
+Last modified by Hause Lin 21-10-18 14:06 hauselin@gmail.com
 """
 
 import pandas as pd
@@ -23,7 +23,8 @@ from psychopy import visual, core, event, data, gui, logging, parallel, monitors
 from scipy import stats
 
 # set DEBUG mode: if True, participant ID will be 999 and display will not be fullscreen. If False, will have to provide participant ID and will be in fullscreen mode
-DEBUG = True
+DEBUG = False
+qualtricsDebriefLink = 'https://utorontopsych.az1.qualtrics.com/jfe/form/SV_6R7pk1abC6oyIq9'
 sendTTL = False # whether to send TTL pulses to acquisition computer
 parallelPortAddress = 49168 # set parallel port address (EEG3: 49168, EEG1: 57360)
 screenRefreshRate = 60 # screen refresh rate
@@ -55,6 +56,11 @@ info['participant'] = int(info['participant'])
 info['age'] = int(info['age'])
 info['scriptDate'] = "191018"  # when was script last modified
 info['screenRefreshRate'] = screenRefreshRate
+
+if qualtricsDebriefLink is not None:
+    import webbrowser
+    webURL = qualtricsDebriefLink + "?participant=" + str(info['participant']) # open using default web browser
+    webbrowser.open_new(webURL)
 
 info['fixationS'] = 1.5 # fixation cross duration (seconds)
 info['fixationFrames'] = int(info['fixationS'] * screenRefreshRate) # fixation cross (frames)
@@ -227,8 +233,6 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
     # [1.0,-1,-1] is red; #[1, 1, 1] is white; [-.3, -.3, -.3] is grey
     fixation = visual.TextStim(win=win, units='norm', height=0.2, ori=0, name='target', text='+', font='Courier New Bold', colorSpace='rgb', color=[1, 1, 1], opacity=1)
 
-    # dotPatch = visual.DotStim(win, color=(1.0, 1.0, 1.0), dir=180, dotSize=4, nDots=100, fieldShape='circle', fieldPos=(0.0, 0.0), fieldSize=1, dotLife=3, signalDots='same', noiseDots='position',speed=0.01, coherence=0.3)
-
     # create clocks to collect reaction and trial times
     respClock = core.Clock()
     trialClock = core.Clock()
@@ -316,19 +320,15 @@ def runDotMotionBlock(taskName='dotMotion', blockType='', effortLevel=None, tria
         ''' DO NOT EDIT END '''
 
         #1: draw and show fixation
-        if thisTrial['effortLevel'] == 0:
-            fixation.setText("|")
-        elif thisTrial['effortLevel'] == 1:
-            fixation.setText("||")
-        elif thisTrial['effortLevel'] == 2:
-            fixation.setText("|||")
+        effortSymbol = int((thisTrial['effortLevel'] + 1)) * "|"
+        fixation.setText(effortSymbol)
         fixation.setAutoDraw(True) #draw fixation on next flips
         for frameN in range(info['fixationFrames']):
             win.flip()
         fixation.setAutoDraw(False) #stop showing fixation
 
         #3: draw stimuli
-        dotPatch = visual.DotStim(win, color=(1.0, 1.0, 1.0), dir=int(thisTrial['dotDirections']), dotSize=6, nDots=int(thisTrial['nDots']), fieldShape='circle', fieldPos=(0.0, 0.0), fieldSize=1, dotLife=int(thisTrial['dotFrames']), signalDots='same', noiseDots='position', speed=thisTrial['speed'], coherence=thisTrial['coherence'])
+        dotPatch = visual.DotStim(win, color=(1.0, 1.0, 1.0), dir=int(thisTrial['dotDirections']), dotSize=6, nDots=int(thisTrial['nDots']), fieldShape='circle', fieldPos=(0.0, 0.0), fieldSize=1, dotLife=int(thisTrial['dotFrames']), signalDots='same', noiseDots='position', speed=thisTrial['speed'], coherence=thisTrial['coherence']) # noiseDots='direction',  # do the noise dots follow random- 'walk', 'direction', or 'position'
         dotPatch.setAutoDraw(True)
 
         win.callOnFlip(respClock.reset) # reset response clock on next flip
@@ -748,20 +748,11 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
         fixation.setAutoDraw(False) #stop showing fixation
 
         #3: draw stimuli
-        if thisTrial['task1'] == 0:
-            leftOption.setText("|")
-        elif thisTrial['task1'] == 1:
-            leftOption.setText("||")
-        elif thisTrial['task1'] == 2:
-            leftOption.setText("|||")
-
-        if thisTrial['task2'] == 0:
-            rightOption.setText("|")
-        elif thisTrial['task2'] == 1:
-            rightOption.setText("||")
-        elif thisTrial['task2'] == 2:
-            rightOption.setText("|||")
-
+        leftOptionEffortSymbol = int(thisTrial['task1'] + 1) * "|"
+        rightOptionEffortSymbol = int(thisTrial['task2'] + 1) * "|"
+        leftOption.setText(leftOptionEffortSymbol)
+        rightOption.setText(rightOptionEffortSymbol)
+        
         leftOption.setAutoDraw(True) #draw fixation on next flips
         rightOption.setAutoDraw(True)  # draw fixation on next flips
 
@@ -877,7 +868,7 @@ def runDemandSelection(taskName='demandSelection', blockType='', trials=[1, 1, 1
         taskDf = pd.DataFrame()  # clear dataframe for next trial
         if trialsDf.loc[i, 'resp'] is not None:
             effortTaskIndex = int(trialsDf.loc[i, 'choice'])
-            taskDf = runDotMotionBlock(taskName='dst_dotMotion_trials', blockType=i+1, effortLevel=effortTaskIndex, trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=False, saveData=False, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+            taskDf = runDotMotionBlock(taskName='dst_dotMotion_trials', blockType=i+1, effortLevel=[effortTaskIndex], trials=[1]*difficultyLevels, dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=False, saveData=False, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 
         columnsToSave = ['effortLevel', 'nDots', 'coherence', 'dotFrames', 'speed', 'dotDirections', 'resp', 'rt', 'acc']
         columnsToSave_newNames = ["dotMotion_" + x for x in columnsToSave]
@@ -1292,29 +1283,36 @@ def showInstructions(text, timeBeforeAutomaticProceed=0, timeBeforeShowingSpace 
 def startExperimentSection():
     pass
 
-info['nDots'] = [10, 100, 500]
-info['coherence'] = [0.05, 0.05, 0.05]
-# info['coherence'] = [1, 1, 1] # for testing
-info['dotFrames'] = [3, 3, 3]
-info['speed'] = [0.01, 0.01, 0.01]
-
-runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+# define dot motion task parameters
+info['nDots'] = [10, 50, 250, 500]
+info['coherence'] = [0.05, 0.06 , 0.07, 0.08]
+# info['coherence'] = [1, 1, 1, 1] # for testing
+info['dotFrames'] = [3, 3, 3, 3]
+info['speed'] = [0.01, 0.01, 0.01, 0.01]
+difficultyLevels = len(info['nDots'])
 
 showInstructions(text=
 ["",
  "You'll do several tasks in this experiment. Different tasks will be represented by different symbols: |, ||, ||| etc.",
- "Try to learn and remember what task each symbol refers to.",
- "One task is the dot motion detection task. You'll see many dots moving in random directions, but a SUBSET of them will move in one consistent direction.",
- "When the dots are moving, you have up to 3 seconds to indicate which direction this consistent SUBSET of dots is moving towards by pressing the arrow keys.",
+ "Try to learn and remember what task each symbol refers to. These symbols will tell you the difficulty level of the upcoming task.",
+ "One task is the dot motion detection task. You'll see a cloud of dots moving in random directions, but SOME of them will move in one consistent direction (left, right, up, or down).",
+ "When the dots are moving, you have up to 4 seconds to indicate the apparent motion of the cloud of dots by pressing the arrow keys.",
  "DO NOT WAIT until the dots have been removed from the display before you respond. If you didn't respond in time, you'll see the message 'respond faster'.",
  "Sometimes, after you've responded, you'll be asked to indicate how confident you are in your responses and how much effort the task required.",
- "Let's try a few examples."
+ "Let's try a few examples.",
+ "Put your hand on the arrow keys now."
 ])
 
-runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1, 1, 1], dotDirections=[0, 90, 180, 270], nDots=[10, 100, 500], coherence=[0.7, 0.7, 0.7], dotFrames=[3, 3, 3], speed=[0.01, 0.01, 0.01], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+# practice 12ms dotFrames
+runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[1]*difficultyLevels, dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=[12]*difficultyLevels, speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+
+# practice actual trials (3 reps per effort level)
+runDotMotionBlock(taskName='dotMotionPracticeEasy', blockType='dotMotionPracticeEasy', trials=[3]*difficultyLevels, dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+
 showInstructions(text=["That's the end of practice. Let's begin the actual task now."])
 
-runDotMotionBlock(taskName='dotMotionForced', blockType='dotMotionForced', trials=[5, 5, 5], dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
+# actual forced choice trials (10 reps per effort level)
+runDotMotionBlock(taskName='dotMotionForced', blockType='dotMotionForced', trials=[10]*difficultyLevels, dotDirections=[0, 90, 180, 270], nDots=info['nDots'], coherence=info['coherence'], dotFrames=info['dotFrames'], speed=info['speed'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=True)
 showInstructions(text=["That's the end of that section."])
 
 showInstructions(text=
@@ -1324,16 +1322,19 @@ showInstructions(text=
  "You'll then do the task you've chosen. Again, use the arrow keys to respond when doing the task.",
  "Let's practice."
 ])
-runDemandSelection(taskName='dotMotionPractice', blockType='dotMotionPractice', trials=[1, 1, 1], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=False, practiceTrials=3, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+
+# demand selection dot motion practice (3 practice trials)
+runDemandSelection(taskName='dotMotionDSTPractice', blockType='dotMotionDSTPractice', trials=[1]*3, trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=False, practiceTrials=3, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 showInstructions(text=["That's the end of practice. Let's begin the actual task now."])
 
-runDemandSelection(taskName='dotMotionDST', blockType='dotMotionDST', trials=[10, 10, 10], trialTypes=['0_1', '0_2', '1_2'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=3, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+# demand selection actual (10 reps per combination)
+runDemandSelection(taskName='dotMotionDST', blockType='dotMotionDST', trials=[10]*10, trialTypes=['0_1', '0_2', '0_3', '1_2', '1_3', '2_3'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 showInstructions(text=["That's the end of the task."])
 
-taskQuestions = ["Overall, how much did you believe the accuracy feedback you received after you make each response?"]
-ratingsDf = presentQuestions(questionName='belief', questionList=taskQuestions, blockType='', saveData=True, rtMaxS=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
+taskQuestions = ["Overall, how confident were you of your responses?", "Overall, how well do you think you've done?", "Overall, how much did you enjoy the tasks?", "Overall, how much did you believe the accuracy feedback you received after you make each response?"]
+ratingsDf = presentQuestions(questionName='taskPerceptions', questionList=taskQuestions, blockType='', saveData=True, rtMaxS=None, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, scaleAnchors=[1, 9], scaleAnchorText=['not at all', 'very much'])
 
-showInstructions(text=["Thank you for taking part in this experiment."])
+showInstructions(text=["You'll now answer a few questions on a web browser."])
 
 win.close()
 core.quit() # quit PsychoPy
