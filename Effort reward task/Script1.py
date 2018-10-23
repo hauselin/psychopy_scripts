@@ -25,7 +25,7 @@ from scipy import stats
 # set DEBUG mode: if True, participant ID will be 999 and display will not be fullscreen. If False, will have to provide participant ID and will be in fullscreen mode
 DEBUG = True
 qualtricsDebriefLink = 'https://utorontopsych.az1.qualtrics.com/jfe/form/SV_6R7pk1abC6oyIq9'
-qualtricsDebriefLink = None
+# qualtricsDebriefLink = None
 sendTTL = False # whether to send TTL pulses to acquisition computer
 parallelPortAddress = 49168 # set parallel port address (EEG3: 49168, EEG1: 57360)
 screenRefreshRate = 60 # screen refresh rate
