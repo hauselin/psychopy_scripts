@@ -8,14 +8,20 @@ To skip a block, press ]
 
 To quit, press \
 
-### Pilot 1.1 Task flow (LATEST)
+For results, see [this repository](https://github.com/hauselin/effortPilots). 
 
-- Task parameters
-  - 4 effort levels (effort levels coded 0, 1, 2, 3)
-    - dots [coherence]: 10 [0.05], 50 [0.06], 250 [0.07], 500 [0.08]
-    - coherent dots' display duration: 3 frames
-  - Feedback (correct/wrong) provided after every trial
-  - RT deadline is 4 s
+### Pilot 1.1 (LATEST)
+
+#### Task parameters
+
+- 4 effort levels (effort levels coded 0, 1, 2, 3)
+  - dots [coherence]: 10 [0.05], 50 [0.06], 250 [0.07], 500 [0.08]
+  - coherent dots' display duration: 3 frames
+- Feedback (correct/wrong) provided after every trial
+- RT deadline is 4 s
+
+#### Task flow
+
 - Practice forced choice
   - 1 rep per effort level (coherent dots are shown for 12 frames/200 ms) (really easy practice rounds!)
   - 3 reps per effort level (coherent dots are shown for 3 frames/50 ms) (actual trials)
