@@ -17,19 +17,20 @@ For results, see [this repository](https://github.com/hauselin/effortPilots).
 - 4 effort levels (effort levels coded 0, 1, 2, 3)
   - dots [coherence]: 10 [0.05], 50 [0.06], 250 [0.07], 500 [0.08]
   - coherent dots' display duration: 3 frames
-- Feedback (correct/wrong) provided after every trial
+- feedback (correct/wrong) provided after every trial
 - RT deadline is 4 s
+- all trials are presented in random order
 
 #### Task flow
 
-- Practice forced choice
+- practice forced choice
   - 1 rep per effort level (coherent dots are shown for 12 frames/200 ms) (really easy practice rounds!)
   - 3 reps per effort level (coherent dots are shown for 3 frames/50 ms) (actual trials)
-- Forced choice block
+- forced choice block
   - 10 reps per effort level; confidence and effort ratings after each trial (1-9 point scale), before task feedback
-- Practice demand selection task
+- practice demand selection task
   - 1 rep each: 0 vs 1, 0 vs 2, 1 vs 2
-- Actual demand selection task
+- actual demand selection task
   - 6 combinations: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
   - 10 reps per combination 
 
