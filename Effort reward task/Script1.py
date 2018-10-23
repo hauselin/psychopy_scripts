@@ -23,7 +23,7 @@ from psychopy import visual, core, event, data, gui, logging, parallel, monitors
 from scipy import stats
 
 # set DEBUG mode: if True, participant ID will be 999 and display will not be fullscreen. If False, will have to provide participant ID and will be in fullscreen mode
-DEBUG = True
+DEBUG = False
 qualtricsDebriefLink = 'https://utorontopsych.az1.qualtrics.com/jfe/form/SV_6R7pk1abC6oyIq9'
 # qualtricsDebriefLink = None
 sendTTL = False # whether to send TTL pulses to acquisition computer
