@@ -23,8 +23,9 @@ from psychopy import visual, core, event, data, gui, logging, parallel, monitors
 from scipy import stats
 
 # set DEBUG mode: if True, participant ID will be 999 and display will not be fullscreen. If False, will have to provide participant ID and will be in fullscreen mode
-DEBUG = False
+DEBUG = True
 qualtricsDebriefLink = 'https://utorontopsych.az1.qualtrics.com/jfe/form/SV_6R7pk1abC6oyIq9'
+qualtricsDebriefLink = None
 sendTTL = False # whether to send TTL pulses to acquisition computer
 parallelPortAddress = 49168 # set parallel port address (EEG3: 49168, EEG1: 57360)
 screenRefreshRate = 60 # screen refresh rate
@@ -56,11 +57,6 @@ info['participant'] = int(info['participant'])
 info['age'] = int(info['age'])
 info['scriptDate'] = "191018"  # when was script last modified
 info['screenRefreshRate'] = screenRefreshRate
-
-if qualtricsDebriefLink is not None:
-    import webbrowser
-    webURL = qualtricsDebriefLink + "?participant=" + str(info['participant']) # open using default web browser
-    webbrowser.open_new(webURL)
 
 info['fixationS'] = 1.5 # fixation cross duration (seconds)
 info['fixationFrames'] = int(info['fixationS'] * screenRefreshRate) # fixation cross (frames)
@@ -100,6 +96,11 @@ win = visual.Window(size=(900, 600), fullscr=fullscreen, units='norm', monitor=m
 #create mouse
 mouse = event.Mouse(visible=False, win=win)
 mouse.setVisible(0) # make mouse invisible
+
+if qualtricsDebriefLink is not None:
+    import webbrowser
+    webURL = qualtricsDebriefLink + "?participant=" + str(info['participant']) # open using default web browser
+    webbrowser.open_new(webURL)
 
 try:
     feedbackTwinkle = sound.Sound(stimulusDir + 'twinkle.wav')
@@ -1285,14 +1286,14 @@ def startExperimentSection():
 
 # define dot motion task parameters
 info['nDots'] = [10, 50, 250, 500]
-info['coherence'] = [0.05, 0.06 , 0.07, 0.08]
+info['coherence'] = [0.05, 0.06, 0.07, 0.08]
 # info['coherence'] = [1, 1, 1, 1] # for testing
 info['dotFrames'] = [3, 3, 3, 3]
 info['speed'] = [0.01, 0.01, 0.01, 0.01]
 difficultyLevels = len(info['nDots'])
 
 showInstructions(text=
-["",
+["Click the left mouse button when you're ready. Then press space to begin.",
  "You'll do several tasks in this experiment. Different tasks will be represented by different symbols: |, ||, ||| etc.",
  "Try to learn and remember what task each symbol refers to. These symbols will tell you the difficulty level of the upcoming task.",
  "One task is the dot motion detection task. You'll see a cloud of dots moving in random directions, but SOME of them will move in one consistent direction (left, right, up, or down).",
@@ -1328,7 +1329,7 @@ runDemandSelection(taskName='dotMotionDSTPractice', blockType='dotMotionDSTPract
 showInstructions(text=["That's the end of practice. Let's begin the actual task now."])
 
 # demand selection actual (10 reps per combination)
-runDemandSelection(taskName='dotMotionDST', blockType='dotMotionDST', trials=[10]*10, trialTypes=['0_1', '0_2', '0_3', '1_2', '1_3', '2_3'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
+runDemandSelection(taskName='dotMotionDST', blockType='dotMotionDST', trials=[10]*6, trialTypes=['0_1', '0_2', '0_3', '1_2', '1_3', '2_3'], feedback=True, saveData=True, practiceTrials=5, titrate=False, rtMaxS=4, blockMaxTimeSeconds=None, experimentMaxTimeSeconds=None, feedbackS=1.0, rewardSchedule=None, feedbackSound=False, pauseAfterMissingNTrials=None, collectRating=False)
 showInstructions(text=["That's the end of the task."])
 
 taskQuestions = ["Overall, how confident were you of your responses?", "Overall, how well do you think you've done?", "Overall, how much did you enjoy the tasks?", "Overall, how much did you believe the accuracy feedback you received after you make each response?"]

@@ -28,7 +28,7 @@ def moveFiles(outputDir = 'Data'):
         os.mkdir(dataDirectory + os.path.sep + 'Archive')
 
     for filename in files:
-        if filename.endswith("csv"):
+        if filename.endswith("csv") or filename.endswith("npy"):
             # print filename
             newNameAndDir = dataDirectory + os.path.sep + filename
             # print newNameAndDir
