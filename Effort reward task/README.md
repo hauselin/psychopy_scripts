@@ -10,7 +10,49 @@ To quit, press \
 
 For results, see [this repository](https://github.com/hauselin/effortPilots). 
 
-### Pilot 1.1 (LATEST)
+### Pilot 1.3 (LATEST)
+
+- 2 effort levels (effort levels coded 0, 1)
+  - dots [coherence]: 10 [0.05], 500 [0.05]
+  - dot size: 3
+  - coherent dots' display duration: 3 frames
+  - dot speed: 0.01
+  - field size: 1
+- RT deadline is 3s
+- false rewards
+
+Task procedure
+
+* Practice easy trials (80% coherence) (introduce task difficulty cues)
+  * 2 difficulty levels (10, 500 dots), 5 trials each
+* PHASE 1
+  * Practice actual trials with false feedback (90% accuracy for easy task, 45% accuracy for difficult task)
+  * Actual forced choice (no false feedback provided)
+    * 2 difficulty levels (10, 500 dots), 5 trials each
+  * Practice demand selection (no false feedback provided)
+    * 5 trials
+  * Actual demand selection (no false feedback provided)
+    * 20 trials
+* PHASE 2
+  * Practice demand selection (reward performance): 10 trials
+  * Practice demand selection (reward choice): 10 trials
+  * Practice demand selection (no reward): 5 trials
+  * Block 1: Actual demand selection training (neutral block): 60 trials
+  * Blocks 2 and 3 (counterbalanced)
+    * Actual demand selection training (choice block): 60 trials
+    * Actual demand selection training (performance block): 60 trials
+* Task perceptions and debrief
+
+### Pilot 1.2 
+
+* 2 effort levels (effort levels coded 0, 1)
+  * dots [coherence]: 10 [0.05], 500 [0.05]
+  * coherent dots' display duration: 3 frames
+* false feedback (0 or 1 point for wrong and correct responses) provided after every trial
+  * probability of receiving points (i.e., getting "correct") on effort level 0 and 1 are 90% and 45% respectively
+* RT deadline is 3s
+
+### Pilot 1.1
 
 #### Task parameters
 
